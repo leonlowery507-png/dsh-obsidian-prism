@@ -184,8 +184,21 @@
       unmount(false);
     }
 
+    function pruneDuplicateHosts(keepHost) {
+      const nodes = Array.from(
+        doc?.querySelectorAll?.('.dsh-prism-home-ripple-host, [data-prism-home-ripple-anchor="1"]') || []
+      );
+      for (const node of nodes) {
+        if (!node || node === keepHost) continue;
+        try {
+          node.parentElement?.removeChild(node);
+        } catch {}
+      }
+    }
+
     function ensureHost(content) {
       if (!host) host = createHost(doc);
+      pruneDuplicateHosts(host);
       if (host.parentElement !== content || content.firstElementChild !== host) {
         content.insertBefore(host, content.firstChild || null);
       }
@@ -489,6 +502,12 @@
 
   function init(bridge) {
     const runtimeBridge = bridge || root?.DSHPrismBridge || null;
+    const prevGlobal = root?.__dshPrismHomeRippleActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
     if (activeInstance) {
       if (activeInstance.__bridge === runtimeBridge) {
         activeInstance.sync();
@@ -500,6 +519,7 @@
     const instance = createController(runtimeBridge);
     Object.defineProperty(instance, '__bridge', { value: runtimeBridge, configurable: true });
     activeInstance = instance;
+    if (root && typeof root === 'object') root.__dshPrismHomeRippleActive = instance;
     instance.start();
     return instance;
   }
@@ -509,9 +529,19 @@
   }
 
   function destroy() {
-    if (!activeInstance) return;
-    activeInstance.destroy();
-    activeInstance = null;
+    const prevGlobal = root?.__dshPrismHomeRippleActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
+    if (activeInstance) {
+      activeInstance.destroy();
+      activeInstance = null;
+    }
+    if (root && typeof root === 'object' && root.__dshPrismHomeRippleActive) {
+      root.__dshPrismHomeRippleActive = null;
+    }
   }
 
   const api = Object.freeze({
@@ -523,7 +553,12 @@
   });
 
   function bootFromBridge() {
-    if (!root?.document || api.getInstance()) return;
+    if (!root?.document) return;
+    if (root.DSHPrismHomeRipple && root.DSHPrismHomeRipple !== api) {
+      root.removeEventListener?.('dsh-prism:ready', bootFromBridge);
+      return;
+    }
+    if (root.__DSH_PRISM_NO_AUTO_BOOT__ === true || api.getInstance()) return;
     const runtimeBridge = root.DSHPrismBridge;
     if (!runtimeBridge) return;
     if (typeof runtimeBridge.registerModule === 'function') {

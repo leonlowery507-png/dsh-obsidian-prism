@@ -427,6 +427,9 @@ window.__ModuleLoader__.load({
       if (G.__dshObsidianPrismModulesLoaded === CODE_HASH && typeof G.__dshObsidianPrismBootstrap === 'function') {
         return;
       }
+      if (G.__dshObsidianPrism && typeof G.__dshObsidianPrism.destroy === 'function') {
+        try { G.__dshObsidianPrism.destroy(); } catch (_) {}
+      }
       var prevNoAuto = G.__DSH_PRISM_NO_AUTO_BOOT__;
       G.__DSH_PRISM_NO_AUTO_BOOT__ = true;
       try {

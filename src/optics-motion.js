@@ -1504,8 +1504,91 @@ void main() {
       setAttrIfChanged(inst.host, 'data-aura-sleep', '1');
     }
 
+    function findConversationContent() {
+      const d = docOf();
+      if (!d || typeof d.querySelectorAll !== 'function') return { contentEl: null, isHome: false };
+      let best = null;
+      let bestArea = -1;
+      try {
+        const nodes = d.querySelectorAll('[data-conversation-content]');
+        for (const node of nodes) {
+          if (!node || isInsideForeignWidget(node) || !isElementVisible(node)) continue;
+          const r = node.getBoundingClientRect?.();
+          const area = Math.max(0, Number(r?.width) || 0) * Math.max(0, Number(r?.height) || 0);
+          if (area > bestArea) {
+            best = node;
+            bestArea = area;
+          }
+        }
+      } catch {}
+      const phase = String(best?.getAttribute?.('data-content-phase') || '').trim().toLowerCase();
+      return { contentEl: best, isHome: phase === 'hero' || phase === 'blank' };
+    }
+
+    function pruneDuplicateBounds(keepBounds) {
+      const d = docOf();
+      if (!d || typeof d.querySelectorAll !== 'function') return;
+      try {
+        d.querySelectorAll('.dsh-optics-conv-bounds').forEach((node) => {
+          if (node && node !== keepBounds) node.remove?.();
+        });
+      } catch {}
+    }
+
     function syncBounds() {
       if (!inst) return;
+      pruneDuplicateBounds(inst.bounds);
+      const { contentEl, isHome } = findConversationContent();
+      if (contentEl) {
+        if (isHome) {
+          inst.homeHidden = true;
+          inst.bounds.style.display = 'none';
+          inst.glow.clear();
+          enterSleep('home-hidden');
+          return;
+        }
+        const wasHomeHidden = Boolean(inst.homeHidden);
+        inst.homeHidden = false;
+        inst.bounds.style.display = '';
+        setAttrIfChanged(inst.bounds, 'data-conv-aura-inline', '1');
+        if (inst.bounds.parentElement !== contentEl) {
+          try {
+            contentEl.appendChild(inst.bounds);
+          } catch {}
+        }
+        inst.bounds.style.left = '';
+        inst.bounds.style.top = '';
+        inst.bounds.style.width = '';
+        inst.bounds.style.height = '';
+        if (contentEl !== inst.observedEl && inst.ro) {
+          try {
+            if (inst.observedEl) inst.ro.unobserve(inst.observedEl);
+            inst.ro.observe(contentEl);
+            inst.observedEl = contentEl;
+          } catch {}
+        }
+        const r = contentEl.getBoundingClientRect?.() || {};
+        const width = Math.max(120, Math.round(Number(r.width) || winOf()?.innerWidth || 960));
+        const height = Math.max(120, Math.round(Number(r.height) || winOf()?.innerHeight || 720));
+        const glowH = Math.max(80, Math.round(height * CONV_AURA_HEIGHT_RATIO));
+        const dpr = resolveHorizonDpr(winOf()?.devicePixelRatio || 1, 0.72);
+        inst.width = width;
+        inst.height = glowH;
+        inst.glow.resize(width, glowH, dpr);
+        if (wasHomeHidden) wake(true);
+        return;
+      }
+
+      const wasHomeHidden = Boolean(inst.homeHidden);
+      inst.homeHidden = false;
+      inst.bounds.style.display = '';
+      inst.bounds.removeAttribute('data-conv-aura-inline');
+      const portal = ensureOpticsPortalLayer();
+      if (portal && inst.bounds.parentElement !== portal) {
+        try {
+          portal.appendChild(inst.bounds);
+        } catch {}
+      }
       const { el, rect } = findTargetSeatRect();
       if (el && el !== inst.observedEl && inst.ro) {
         try {
@@ -1527,11 +1610,17 @@ void main() {
       inst.width = width;
       inst.height = glowH;
       inst.glow.resize(width, glowH, dpr);
+      if (wasHomeHidden) wake(true);
     }
 
     function drawFrame(nowInput) {
       if (!inst || isDestroyed()) return;
       inst.rafId = 0;
+      if (inst.homeHidden) {
+        inst.glow.clear();
+        enterSleep('home-hidden');
+        return;
+      }
       const now = typeof nowInput === 'number' && nowInput > 0 ? nowInput : nowMs();
       const ambient = parseAmbientScale(getAmbientIntensity());
       const tier = getMotionTier();
@@ -1624,6 +1713,8 @@ void main() {
       const bounds = d.createElement('div');
       bounds.className = 'dsh-optics-conv-bounds';
       bounds.setAttribute('aria-hidden', 'true');
+      bounds.setAttribute('data-prism-ignore', '1');
+      bounds.setAttribute('data-dsh-prism-owned', '1');
 
       const host = d.createElement('div');
       host.className = 'ag-cs-conv-aura-host';
@@ -2626,7 +2717,11 @@ void main() {
         for (let i = 0; i < mutations.length; i++) {
           const t = mutations[i]?.target;
           if (!t || isInsideForeignWidget(t)) continue;
-          if (mutations[i].addedNodes?.length || mutations[i].removedNodes?.length) {
+          if (
+            mutations[i].type === 'attributes' ||
+            mutations[i].addedNodes?.length ||
+            mutations[i].removedNodes?.length
+          ) {
             hasExternalStructuralMut = true;
             break;
           }
@@ -2644,7 +2739,12 @@ void main() {
           } catch {}
         }, 120);
       });
-      spaObs.observe(d.body, { childList: true, subtree: true });
+      spaObs.observe(d.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-content-phase'],
+      });
       cleanups.push(() => {
         spaObs.disconnect();
         if (spaKeepAliveTimer) {
@@ -2712,16 +2812,37 @@ void main() {
           removeOpticsPortalLayer();
         } catch {}
         if (activeInstance === controller) activeInstance = null;
+        if (G && typeof G === 'object' && G.__dshPrismOpticsActive === controller) {
+          G.__dshPrismOpticsActive = null;
+        }
       },
     };
 
+    if (G?.__dshPrismOpticsActive && G.__dshPrismOpticsActive !== activeInstance) {
+      try { G.__dshPrismOpticsActive.destroy?.(); } catch {}
+    }
     activeInstance = controller;
+    if (G && typeof G === 'object') G.__dshPrismOpticsActive = controller;
     return controller;
+  }
+
+  function destroy() {
+    if (G?.__dshPrismOpticsActive && G.__dshPrismOpticsActive !== activeInstance) {
+      try { G.__dshPrismOpticsActive.destroy?.(); } catch {}
+    }
+    if (activeInstance) {
+      try { activeInstance.destroy(); } catch {}
+      activeInstance = null;
+    }
+    if (G && typeof G === 'object' && G.__dshPrismOpticsActive) {
+      G.__dshPrismOpticsActive = null;
+    }
   }
 
   return Object.freeze({
     PORTAL_ID,
     init,
+    destroy,
     getInstance: () => activeInstance,
     motion: motionEngine,
     crystal: crystalCore,

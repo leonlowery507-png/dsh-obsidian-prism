@@ -5,7 +5,7 @@
  * Downstream DSH Port Modified: 2026-11-22
  */
 
-/* Build Hash: ufevz1 | Version: 1.0.7-beta.1-dsh.1 */
+/* Build Hash: 4uj8mw | Version: 1.0.7-beta.1-dsh.1 */
 
 // === [1/10] src/tokens-palettes.js ===
 ;(function (root, window, self, document, module, exports) {
@@ -3948,8 +3948,91 @@ void main() {
       setAttrIfChanged(inst.host, 'data-aura-sleep', '1');
     }
 
+    function findConversationContent() {
+      const d = docOf();
+      if (!d || typeof d.querySelectorAll !== 'function') return { contentEl: null, isHome: false };
+      let best = null;
+      let bestArea = -1;
+      try {
+        const nodes = d.querySelectorAll('[data-conversation-content]');
+        for (const node of nodes) {
+          if (!node || isInsideForeignWidget(node) || !isElementVisible(node)) continue;
+          const r = node.getBoundingClientRect?.();
+          const area = Math.max(0, Number(r?.width) || 0) * Math.max(0, Number(r?.height) || 0);
+          if (area > bestArea) {
+            best = node;
+            bestArea = area;
+          }
+        }
+      } catch {}
+      const phase = String(best?.getAttribute?.('data-content-phase') || '').trim().toLowerCase();
+      return { contentEl: best, isHome: phase === 'hero' || phase === 'blank' };
+    }
+
+    function pruneDuplicateBounds(keepBounds) {
+      const d = docOf();
+      if (!d || typeof d.querySelectorAll !== 'function') return;
+      try {
+        d.querySelectorAll('.dsh-optics-conv-bounds').forEach((node) => {
+          if (node && node !== keepBounds) node.remove?.();
+        });
+      } catch {}
+    }
+
     function syncBounds() {
       if (!inst) return;
+      pruneDuplicateBounds(inst.bounds);
+      const { contentEl, isHome } = findConversationContent();
+      if (contentEl) {
+        if (isHome) {
+          inst.homeHidden = true;
+          inst.bounds.style.display = 'none';
+          inst.glow.clear();
+          enterSleep('home-hidden');
+          return;
+        }
+        const wasHomeHidden = Boolean(inst.homeHidden);
+        inst.homeHidden = false;
+        inst.bounds.style.display = '';
+        setAttrIfChanged(inst.bounds, 'data-conv-aura-inline', '1');
+        if (inst.bounds.parentElement !== contentEl) {
+          try {
+            contentEl.appendChild(inst.bounds);
+          } catch {}
+        }
+        inst.bounds.style.left = '';
+        inst.bounds.style.top = '';
+        inst.bounds.style.width = '';
+        inst.bounds.style.height = '';
+        if (contentEl !== inst.observedEl && inst.ro) {
+          try {
+            if (inst.observedEl) inst.ro.unobserve(inst.observedEl);
+            inst.ro.observe(contentEl);
+            inst.observedEl = contentEl;
+          } catch {}
+        }
+        const r = contentEl.getBoundingClientRect?.() || {};
+        const width = Math.max(120, Math.round(Number(r.width) || winOf()?.innerWidth || 960));
+        const height = Math.max(120, Math.round(Number(r.height) || winOf()?.innerHeight || 720));
+        const glowH = Math.max(80, Math.round(height * CONV_AURA_HEIGHT_RATIO));
+        const dpr = resolveHorizonDpr(winOf()?.devicePixelRatio || 1, 0.72);
+        inst.width = width;
+        inst.height = glowH;
+        inst.glow.resize(width, glowH, dpr);
+        if (wasHomeHidden) wake(true);
+        return;
+      }
+
+      const wasHomeHidden = Boolean(inst.homeHidden);
+      inst.homeHidden = false;
+      inst.bounds.style.display = '';
+      inst.bounds.removeAttribute('data-conv-aura-inline');
+      const portal = ensureOpticsPortalLayer();
+      if (portal && inst.bounds.parentElement !== portal) {
+        try {
+          portal.appendChild(inst.bounds);
+        } catch {}
+      }
       const { el, rect } = findTargetSeatRect();
       if (el && el !== inst.observedEl && inst.ro) {
         try {
@@ -3971,11 +4054,17 @@ void main() {
       inst.width = width;
       inst.height = glowH;
       inst.glow.resize(width, glowH, dpr);
+      if (wasHomeHidden) wake(true);
     }
 
     function drawFrame(nowInput) {
       if (!inst || isDestroyed()) return;
       inst.rafId = 0;
+      if (inst.homeHidden) {
+        inst.glow.clear();
+        enterSleep('home-hidden');
+        return;
+      }
       const now = typeof nowInput === 'number' && nowInput > 0 ? nowInput : nowMs();
       const ambient = parseAmbientScale(getAmbientIntensity());
       const tier = getMotionTier();
@@ -4068,6 +4157,8 @@ void main() {
       const bounds = d.createElement('div');
       bounds.className = 'dsh-optics-conv-bounds';
       bounds.setAttribute('aria-hidden', 'true');
+      bounds.setAttribute('data-prism-ignore', '1');
+      bounds.setAttribute('data-dsh-prism-owned', '1');
 
       const host = d.createElement('div');
       host.className = 'ag-cs-conv-aura-host';
@@ -5070,7 +5161,11 @@ void main() {
         for (let i = 0; i < mutations.length; i++) {
           const t = mutations[i]?.target;
           if (!t || isInsideForeignWidget(t)) continue;
-          if (mutations[i].addedNodes?.length || mutations[i].removedNodes?.length) {
+          if (
+            mutations[i].type === 'attributes' ||
+            mutations[i].addedNodes?.length ||
+            mutations[i].removedNodes?.length
+          ) {
             hasExternalStructuralMut = true;
             break;
           }
@@ -5088,7 +5183,12 @@ void main() {
           } catch {}
         }, 120);
       });
-      spaObs.observe(d.body, { childList: true, subtree: true });
+      spaObs.observe(d.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-content-phase'],
+      });
       cleanups.push(() => {
         spaObs.disconnect();
         if (spaKeepAliveTimer) {
@@ -5156,16 +5256,37 @@ void main() {
           removeOpticsPortalLayer();
         } catch {}
         if (activeInstance === controller) activeInstance = null;
+        if (G && typeof G === 'object' && G.__dshPrismOpticsActive === controller) {
+          G.__dshPrismOpticsActive = null;
+        }
       },
     };
 
+    if (G?.__dshPrismOpticsActive && G.__dshPrismOpticsActive !== activeInstance) {
+      try { G.__dshPrismOpticsActive.destroy?.(); } catch {}
+    }
     activeInstance = controller;
+    if (G && typeof G === 'object') G.__dshPrismOpticsActive = controller;
     return controller;
+  }
+
+  function destroy() {
+    if (G?.__dshPrismOpticsActive && G.__dshPrismOpticsActive !== activeInstance) {
+      try { G.__dshPrismOpticsActive.destroy?.(); } catch {}
+    }
+    if (activeInstance) {
+      try { activeInstance.destroy(); } catch {}
+      activeInstance = null;
+    }
+    if (G && typeof G === 'object' && G.__dshPrismOpticsActive) {
+      G.__dshPrismOpticsActive = null;
+    }
   }
 
   return Object.freeze({
     PORTAL_ID,
     init,
+    destroy,
     getInstance: () => activeInstance,
     motion: motionEngine,
     crystal: crystalCore,
@@ -8154,8 +8275,21 @@ void main() {
       unmount(false);
     }
 
+    function pruneDuplicateHosts(keepHost) {
+      const nodes = Array.from(
+        doc?.querySelectorAll?.('.dsh-prism-home-ripple-host, [data-prism-home-ripple-anchor="1"]') || []
+      );
+      for (const node of nodes) {
+        if (!node || node === keepHost) continue;
+        try {
+          node.parentElement?.removeChild(node);
+        } catch {}
+      }
+    }
+
     function ensureHost(content) {
       if (!host) host = createHost(doc);
+      pruneDuplicateHosts(host);
       if (host.parentElement !== content || content.firstElementChild !== host) {
         content.insertBefore(host, content.firstChild || null);
       }
@@ -8459,6 +8593,12 @@ void main() {
 
   function init(bridge) {
     const runtimeBridge = bridge || root?.DSHPrismBridge || null;
+    const prevGlobal = root?.__dshPrismHomeRippleActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
     if (activeInstance) {
       if (activeInstance.__bridge === runtimeBridge) {
         activeInstance.sync();
@@ -8470,6 +8610,7 @@ void main() {
     const instance = createController(runtimeBridge);
     Object.defineProperty(instance, '__bridge', { value: runtimeBridge, configurable: true });
     activeInstance = instance;
+    if (root && typeof root === 'object') root.__dshPrismHomeRippleActive = instance;
     instance.start();
     return instance;
   }
@@ -8479,9 +8620,19 @@ void main() {
   }
 
   function destroy() {
-    if (!activeInstance) return;
-    activeInstance.destroy();
-    activeInstance = null;
+    const prevGlobal = root?.__dshPrismHomeRippleActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
+    if (activeInstance) {
+      activeInstance.destroy();
+      activeInstance = null;
+    }
+    if (root && typeof root === 'object' && root.__dshPrismHomeRippleActive) {
+      root.__dshPrismHomeRippleActive = null;
+    }
   }
 
   const api = Object.freeze({
@@ -8493,7 +8644,12 @@ void main() {
   });
 
   function bootFromBridge() {
-    if (!root?.document || api.getInstance()) return;
+    if (!root?.document) return;
+    if (root.DSHPrismHomeRipple && root.DSHPrismHomeRipple !== api) {
+      root.removeEventListener?.('dsh-prism:ready', bootFromBridge);
+      return;
+    }
+    if (root.__DSH_PRISM_NO_AUTO_BOOT__ === true || api.getInstance()) return;
     const runtimeBridge = root.DSHPrismBridge;
     if (!runtimeBridge) return;
     if (typeof runtimeBridge.registerModule === 'function') {
@@ -9260,8 +9416,21 @@ void main() {
       }, 36);
     }
 
+    function pruneDuplicateSeats(keepSeat) {
+      const nodes = Array.from(
+        doc?.querySelectorAll?.('.dsh-prism-home-studio-seat, .ag-cs-home-panel-seat, [data-prism-home-studio="1"]') || []
+      );
+      for (const node of nodes) {
+        if (!node || node === keepSeat) continue;
+        try {
+          node.parentElement?.removeChild(node);
+        } catch {}
+      }
+    }
+
     function removeSeat() {
       if (seat?.parentElement) seat.parentElement.removeChild(seat);
+      pruneDuplicateSeats(null);
       contentEl = null;
     }
 
@@ -9272,6 +9441,7 @@ void main() {
         contentEl.querySelector?.( '[data-composer-seat][data-conversation-region="composer"]');
       if (!scroll) return false;
       if (!seat) return false;
+      pruneDuplicateSeats(seat);
       if (seat.parentElement !== scroll) {
         scroll.insertBefore(seat, composerSeat && composerSeat.parentElement === scroll ? composerSeat : null);
       } else if (composerSeat && composerSeat.parentElement === scroll && seat.nextElementSibling !== composerSeat) {
@@ -10394,6 +10564,12 @@ void main() {
 
   function init(bridge) {
     const runtimeBridge = bridge || root?.DSHPrismBridge || null;
+    const prevGlobal = root?.__dshPrismHomeStudioActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
     if (activeInstance) {
       if (activeInstance.__bridge === runtimeBridge) {
         activeInstance.sync();
@@ -10405,6 +10581,7 @@ void main() {
     const instance = createController(runtimeBridge);
     Object.defineProperty(instance, '__bridge', { value: runtimeBridge, configurable: true });
     activeInstance = instance;
+    if (root && typeof root === 'object') root.__dshPrismHomeStudioActive = instance;
     instance.start();
     return instance;
   }
@@ -10414,9 +10591,19 @@ void main() {
   }
 
   function destroy() {
-    if (!activeInstance) return;
-    activeInstance.destroy();
-    activeInstance = null;
+    const prevGlobal = root?.__dshPrismHomeStudioActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
+    if (activeInstance) {
+      activeInstance.destroy();
+      activeInstance = null;
+    }
+    if (root && typeof root === 'object' && root.__dshPrismHomeStudioActive) {
+      root.__dshPrismHomeStudioActive = null;
+    }
   }
 
   const api = Object.freeze({
@@ -10430,7 +10617,13 @@ void main() {
   });
 
   function bootFromBridge() {
-    if (!root?.document || api.getInstance()) return;
+    if (!root?.document) return;
+    // 若已有更新版本接管全局入口，卸载旧监听，避免热重载后复活出重复仪表盘
+    if (root.DSHPrismHomeStudio && root.DSHPrismHomeStudio !== api) {
+      root.removeEventListener?.('dsh-prism:ready', bootFromBridge);
+      return;
+    }
+    if (root.__DSH_PRISM_NO_AUTO_BOOT__ === true || api.getInstance()) return;
     const runtimeBridge = root.DSHPrismBridge;
     if (!runtimeBridge) return;
     if (typeof runtimeBridge.registerModule === 'function') {
@@ -18293,7 +18486,7 @@ void main() {
   if (!G) return;
 
   var VERSION = "1.0.7-beta.1-dsh.1";
-  var CODE_HASH = "ufevz1";
+  var CODE_HASH = "4uj8mw";
   var ACTIVE_INST = null;
   var BOOT_SCHEDULED = false;
 

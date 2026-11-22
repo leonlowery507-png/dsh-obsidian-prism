@@ -3061,3 +3061,79 @@ test('37. 1.0.7 设置中心保留 33 项上游 schema、3 项 DSH 扩展并渲�
   unmount();
   assert.equal(container.querySelector('[data-dsh-prism-embedded-root="1"]'), null);
 });
+
+test('38. Home Studio 跨热重载、重复 dsh-prism:ready 与孤儿节点场景始终仅保留 1 个仪表盘', t => {
+  const env = createMockBrowserEnv(), { doc } = env;
+  const bridge = createModuleBridge({ homeLayout: 'studio', language: 'zh-CN' });
+  env.sandbox.DSHPrismBridge = bridge;
+
+  const root = add(doc.body, 'div', { id: 'root' });
+  const content = add(root, 'div', {
+    'data-conversation-content': '',
+    'data-content-phase': 'hero',
+    'data-conversation-session': 'home-dedup-session',
+  });
+  const scroll = add(content, 'div', { 'data-conversation-scroll': '' });
+  add(scroll, 'div', { class: 'ag-cs-home-panel-seat dsh-prism-home-studio-seat', 'data-prism-home-studio': '1' });
+  add(scroll, 'div', { 'data-composer-seat': '', 'data-conversation-region': 'composer' });
+
+  // 第一次加载并初始化
+  loadBrowserModule(env, 'src/home-studio-panel.js');
+  const firstApi = env.sandbox.DSHPrismHomeStudio;
+  firstApi.init(bridge);
+  env.tick(180);
+  assert.equal(doc.querySelectorAll('[data-prism-home-studio="1"]').length, 1, '孤儿节点应被自动去重');
+
+  // 模拟热重载：重新执行模块脚本并触发 dsh-prism:ready，旧监听器不得复活第二个仪表盘
+  loadBrowserModule(env, 'src/home-studio-panel.js');
+  const secondApi = env.sandbox.DSHPrismHomeStudio;
+  assert.notEqual(secondApi, firstApi);
+  secondApi.init(bridge);
+  t.after(() => secondApi.destroy());
+  env.sandbox.dispatchEvent(new env.sandbox.CustomEvent('dsh-prism:ready', { detail: {} }));
+  env.tick(180);
+
+  assert.equal(doc.querySelectorAll('[data-prism-home-studio="1"]').length, 1, '跨热重载与 ready 事件后只允许存在 1 个仪表盘');
+  assert.equal(doc.querySelectorAll('.ag-cs-home-panel').length, 1, '仪表盘主面板数量必须严格为 1');
+});
+
+test('39. 底部 conv-aura 光效在活跃会话内联挂于输入框下方，并在 hero/blank 首页自动隐藏', t => {
+  const env = createMockBrowserEnv(), { doc } = env;
+  loadBrowserModule(env, 'src/optics-motion.js');
+  const optics = env.sandbox.DSHPrismOptics;
+  assert.ok(optics);
+
+  const root = add(doc.body, 'div', { id: 'root' });
+  const content = add(root, 'div', {
+    'data-conversation-content': '',
+    'data-content-phase': 'active',
+    'data-conversation-session': 'chat-layer-session',
+  });
+  const scroll = add(content, 'div', { 'data-conversation-scroll': '' });
+  const composerSeat = add(scroll, 'div', { 'data-composer-seat': '', 'data-conversation-region': 'composer' });
+
+  const bridge = createModuleBridge({ theme: 'crystal', motionLevel: 'ultra', ambientIntensity: '100' });
+  const ctrl = optics.init(bridge);
+  t.after(() => optics.destroy());
+  env.tick(180);
+
+  const bounds = content.querySelector(':scope > .dsh-optics-conv-bounds[data-conv-aura-inline="1"]');
+  const portal = doc.getElementById(optics.PORTAL_ID);
+  assert.ok(bounds, '活跃对话页 conv-aura 必须内联挂在 [data-conversation-content] 内作为 z-index: 0 背景层');
+  assert.equal(portal?.querySelector('.dsh-optics-conv-bounds'), null, 'conv-aura 不应留在 z-index: 18 顶层 Portal 遮挡输入框');
+  assert.equal(bounds.style.display, '', '活跃对话页底部光效应当可见');
+  assert.equal(composerSeat.parentElement, scroll, '不得移动或包裹 React 管理的 composerSeat');
+
+  // 切换到空白/hero 首页时自动隐藏 conv-aura，避免与首页波纹叠加盖住输入框
+  content.setAttribute('data-content-phase', 'hero');
+  ctrl.convAura.sync();
+  env.tick(180);
+  assert.equal(bounds.style.display, 'none', 'hero 首页应隐藏 conv-aura');
+  assert.equal(ctrl.convAura.getState().sleepReason, 'home-hidden');
+
+  // 切回活跃对话后恢复显示
+  content.setAttribute('data-content-phase', 'active');
+  ctrl.convAura.sync();
+  env.tick(180);
+  assert.equal(bounds.style.display, '', '切回 active 对话页应恢复显示 conv-aura');
+});

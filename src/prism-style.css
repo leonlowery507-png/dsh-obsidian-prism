@@ -1089,6 +1089,34 @@ html:is([data-prism-ambient="0.7"], [data-prism-ambient="70"], [data-ag-cs-ambie
   z-index: 1;
 }
 
+/* 活跃对话视图内的底层地平线光效容器：严格处于消息内容与输入框下方 (z-index: 0) */
+[data-conversation-content] > .dsh-optics-conv-bounds[data-conv-aura-inline="1"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+[data-conversation-content]:has(> .dsh-optics-conv-bounds[data-conv-aura-inline="1"]) {
+  isolation: isolate;
+}
+
+[data-conversation-content]:has(> .dsh-optics-conv-bounds[data-conv-aura-inline="1"])
+  > :not(.dsh-prism-home-ripple-host):not(.dsh-optics-conv-bounds) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 让活跃对话底部输入框底座柔和透出下方的地平线光效，同时由 94% 不透明输入框卡片稳稳压在光效之上 */
+html[data-prism-theme] [data-conversation-content][data-content-phase="active"] [data-composer-seat] {
+  background: linear-gradient(
+    180deg,
+    transparent 0px,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 26%, transparent) 44px
+  ) !important;
+}
+
 #dsh-obsidian-prism-optics-layer .ag-cs-conv-aura-host,
 .ag-cs-conv-aura-host {
   position: absolute;

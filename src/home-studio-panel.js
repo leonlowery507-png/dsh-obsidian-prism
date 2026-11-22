@@ -728,8 +728,21 @@
       }, 36);
     }
 
+    function pruneDuplicateSeats(keepSeat) {
+      const nodes = Array.from(
+        doc?.querySelectorAll?.('.dsh-prism-home-studio-seat, .ag-cs-home-panel-seat, [data-prism-home-studio="1"]') || []
+      );
+      for (const node of nodes) {
+        if (!node || node === keepSeat) continue;
+        try {
+          node.parentElement?.removeChild(node);
+        } catch {}
+      }
+    }
+
     function removeSeat() {
       if (seat?.parentElement) seat.parentElement.removeChild(seat);
+      pruneDuplicateSeats(null);
       contentEl = null;
     }
 
@@ -740,6 +753,7 @@
         contentEl.querySelector?.( '[data-composer-seat][data-conversation-region="composer"]');
       if (!scroll) return false;
       if (!seat) return false;
+      pruneDuplicateSeats(seat);
       if (seat.parentElement !== scroll) {
         scroll.insertBefore(seat, composerSeat && composerSeat.parentElement === scroll ? composerSeat : null);
       } else if (composerSeat && composerSeat.parentElement === scroll && seat.nextElementSibling !== composerSeat) {
@@ -1862,6 +1876,12 @@
 
   function init(bridge) {
     const runtimeBridge = bridge || root?.DSHPrismBridge || null;
+    const prevGlobal = root?.__dshPrismHomeStudioActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
     if (activeInstance) {
       if (activeInstance.__bridge === runtimeBridge) {
         activeInstance.sync();
@@ -1873,6 +1893,7 @@
     const instance = createController(runtimeBridge);
     Object.defineProperty(instance, '__bridge', { value: runtimeBridge, configurable: true });
     activeInstance = instance;
+    if (root && typeof root === 'object') root.__dshPrismHomeStudioActive = instance;
     instance.start();
     return instance;
   }
@@ -1882,9 +1903,19 @@
   }
 
   function destroy() {
-    if (!activeInstance) return;
-    activeInstance.destroy();
-    activeInstance = null;
+    const prevGlobal = root?.__dshPrismHomeStudioActive || null;
+    if (prevGlobal && prevGlobal !== activeInstance && typeof prevGlobal.destroy === 'function') {
+      try {
+        prevGlobal.destroy();
+      } catch {}
+    }
+    if (activeInstance) {
+      activeInstance.destroy();
+      activeInstance = null;
+    }
+    if (root && typeof root === 'object' && root.__dshPrismHomeStudioActive) {
+      root.__dshPrismHomeStudioActive = null;
+    }
   }
 
   const api = Object.freeze({
@@ -1898,7 +1929,13 @@
   });
 
   function bootFromBridge() {
-    if (!root?.document || api.getInstance()) return;
+    if (!root?.document) return;
+    // 若已有更新版本接管全局入口，卸载旧监听，避免热重载后复活出重复仪表盘
+    if (root.DSHPrismHomeStudio && root.DSHPrismHomeStudio !== api) {
+      root.removeEventListener?.('dsh-prism:ready', bootFromBridge);
+      return;
+    }
+    if (root.__DSH_PRISM_NO_AUTO_BOOT__ === true || api.getInstance()) return;
     const runtimeBridge = root.DSHPrismBridge;
     if (!runtimeBridge) return;
     if (typeof runtimeBridge.registerModule === 'function') {
