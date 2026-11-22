@@ -5,7 +5,7 @@
  * Downstream DSH Port Modified: 2026-11-22
  */
 
-/* Build Hash: itvgom | Version: 1.0.7-beta.1-dsh.1 */
+/* Build Hash: ufevz1 | Version: 1.0.7-beta.1-dsh.1 */
 
 // === [1/10] src/tokens-palettes.js ===
 ;(function (root, window, self, document, module, exports) {
@@ -3706,8 +3706,20 @@ void main() {
       }
     }
 
+    function onPointerLeave() {
+      if (isDestroyed()) return;
+      pointerPos.x = -9999;
+      pointerPos.y = -9999;
+      if (rafId && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      clearOverlay();
+    }
+
     return {
       onPointerMove,
+      onPointerLeave,
       markDirty() {
         cacheDirty = true;
         if (isDisabled()) clearOverlay();
@@ -4982,17 +4994,23 @@ void main() {
     } catch {}
 
     const onPtrMove = (ev) => rimCanvas.onPointerMove(ev);
-    const onWinBlur = () => setAttrIfChanged(d?.documentElement, 'data-ag-cs-win-blur', '1');
+    const onPtrLeave = () => rimCanvas.onPointerLeave();
+    const onWinBlur = () => {
+      setAttrIfChanged(d?.documentElement, 'data-ag-cs-win-blur', '1');
+      rimCanvas.onPointerLeave();
+    };
     const onWinFocus = () => d?.documentElement?.removeAttribute('data-ag-cs-win-blur');
 
     if (w && typeof w.addEventListener === 'function') {
       w.addEventListener('pointermove', onPtrMove, { passive: true });
       w.addEventListener('blur', onWinBlur, { passive: true });
       w.addEventListener('focus', onWinFocus, { passive: true });
+      d?.documentElement?.addEventListener?.('mouseleave', onPtrLeave, { passive: true });
       cleanups.push(() => {
         w.removeEventListener('pointermove', onPtrMove);
         w.removeEventListener('blur', onWinBlur);
         w.removeEventListener('focus', onWinFocus);
+        d?.documentElement?.removeEventListener?.('mouseleave', onPtrLeave);
       });
     }
 
@@ -18275,7 +18293,7 @@ void main() {
   if (!G) return;
 
   var VERSION = "1.0.7-beta.1-dsh.1";
-  var CODE_HASH = "itvgom";
+  var CODE_HASH = "ufevz1";
   var ACTIVE_INST = null;
   var BOOT_SCHEDULED = false;
 

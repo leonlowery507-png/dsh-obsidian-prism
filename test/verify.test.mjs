@@ -2446,8 +2446,8 @@ test('27. 四主题注入的实际样式按 DOM 标记为输入卡片提供玻�
     assert.equal(important(shell.root, alias), 'inherit');
     assert.equal(important(shell.card, surface), `var(${alias})`);
     const composerBackground = important(shell.card, 'background');
-    assert.match(composerBackground, /linear-gradient\(90deg, var\(--ag-prism-cobalt/,
-      'the composer keeps its spectrum underglow');
+    assert.doesNotMatch(composerBackground, /linear-gradient\(90deg, var\(--ag-prism-cobalt/,
+      'composer should not paint a permanent rainbow neon strip when the pointer is away');
     assert.match(composerBackground, /var\(--ag-cs-sheen\)/);
     assert.match(composerBackground, /var\(--dsw-specific-input-major\)/);
     assert.equal(important(shell.sideCol, 'border-right'), '0.5px solid var(--dsw-alias-border-l2)');

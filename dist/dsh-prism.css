@@ -2158,16 +2158,12 @@ html[data-prism-theme] [data-prism-composer="1"] {
   --prism-card-edge: var(--dsw-alias-border-l2);
   border-radius: var(--dsw-radius-panel);
   background:
-    linear-gradient(0deg, color-mix(in srgb, var(--ag-prism-iris, #9b72cb) 18%, transparent), transparent) left bottom / 100% 18px no-repeat,
-    linear-gradient(90deg, var(--ag-prism-cobalt, #4285f4), var(--ag-prism-iris, #9b72cb), var(--ag-prism-coral, #ea4335), var(--ag-prism-amber, #fbbc04), var(--ag-prism-cobalt, #4285f4)) left bottom / 100% 1.5px no-repeat,
     var(--ag-cs-sheen),
     var(--dsw-specific-input-major) !important;
   backdrop-filter: blur(18px) saturate(135%);
   box-shadow:
     inset 0 0 0 0.5px var(--prism-card-edge),
     inset 0 1px 0 var(--ag-cs-specular),
-    0 5px 20px -12px color-mix(in srgb, var(--ag-prism-cobalt, #4285f4) 62%, transparent),
-    0 8px 24px -14px color-mix(in srgb, var(--ag-prism-iris, #9b72cb) 52%, transparent),
     var(--ag-cs-composer-shadow);
   color: var(--dsw-alias-label-primary);
 }
@@ -2178,8 +2174,6 @@ html[data-prism-theme] [data-prism-composer="1"]:focus-within {
     inset 0 0 0 1px var(--prism-card-edge),
     inset 0 2px 0 var(--ag-cs-focus-spec),
     0 0 0 3px var(--ag-cs-focus-halo),
-    0 5px 20px -12px color-mix(in srgb, var(--ag-prism-cobalt, #4285f4) 62%, transparent),
-    0 8px 24px -14px color-mix(in srgb, var(--ag-prism-iris, #9b72cb) 52%, transparent),
     var(--ag-cs-composer-shadow);
 }
 
