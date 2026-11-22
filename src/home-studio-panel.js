@@ -20,6 +20,7 @@
     '[data-conversation-content][data-content-phase="hero"], ' +
     '[data-conversation-content][data-content-phase="blank"]';
   const RANGE_DAYS = Object.freeze({ '7d': 7, '30d': 30, '90d': 90, all: 0 });
+  const HOME_HEAT_WEEKS = 26;
   const HOME_COLOUR_COUNT = 8;
   const OWNED_SELECTOR = '[data-dsh-prism-owned="1"], .dsh-prism-home-studio-seat';
 
@@ -852,20 +853,28 @@
 
     function onHeatHover(event) {
       const cell = event.target?.closest?.('.ag-cs-home-heat-cell[data-tip]');
-      if (!cell || !panel?.contains(cell)) return;
+      if (!cell || !panel?.contains(cell)) {
+        hideHeatHint();
+        return;
+      }
       const grid = cell.closest?.('.ag-cs-home-heat');
       const hint = grid?.querySelector?.('.ag-cs-home-heat-hint');
       if (!grid || !hint) return;
       const tip = cell.getAttribute('data-tip') || '';
-      const width = Math.max(92, Math.min(248, tip.length * 7 + 20));
-      const gridWidth = grid.clientWidth || 480;
-      const gridHeight = grid.clientHeight || 96;
-      const left = clamp(cell.offsetLeft + cell.offsetWidth / 2 - width / 2, 0, Math.max(0, gridWidth - width));
-      const below = gridHeight - (cell.offsetTop + cell.offsetHeight);
-      const top = below > 34 ? cell.offsetTop + cell.offsetHeight + 6 : Math.max(0, cell.offsetTop - 28);
       hint.textContent = tip;
-      hint.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
       hint.setAttribute('data-shown', 'true');
+      const measuredW = hint.offsetWidth || hint.getBoundingClientRect?.().width || 0;
+      const measuredH = hint.offsetHeight || hint.getBoundingClientRect?.().height || 22;
+      const width = measuredW > 0 ? measuredW : Math.max(96, Math.min(248, tip.length * 7.2 + 18));
+      const gridWidth = grid.clientWidth || grid.getBoundingClientRect?.().width || 440;
+      const gridHeight = grid.clientHeight || grid.getBoundingClientRect?.().height || 80;
+      const left = clamp(cell.offsetLeft + cell.offsetWidth / 2 - width / 2, 0, Math.max(0, gridWidth - width));
+      const preferAbove = cell.offsetTop - measuredH - 5;
+      const top =
+        preferAbove >= -18
+          ? preferAbove
+          : Math.min(gridHeight - measuredH, cell.offsetTop + cell.offsetHeight + 5);
+      hint.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
     }
 
     function ingestTelemetry(raw, source = 'telemetry') {
@@ -1305,14 +1314,36 @@
       const hasData =
         active.tokenTotal > 0 ||
         Array.from(active.dayMap.values()).some((row) => row.tokens > 0 || row.calls > 0);
+      const fullView = useExternal ? buildExternalView('all') : buildSamplesView('all');
       return {
         ...active,
+        heatDayMap: fullView.dayMap,
         peakContext: peak,
         favorite,
         hasData,
         source: useExternal ? 'host' : samples.length ? 'samples' : 'none',
         latestAt: Math.max(active.latestAt || 0, state.lastUpdatedAt || 0),
       };
+    }
+
+    function buildHeatSeries(data) {
+      const today = startOfDay(new Date());
+      const map = data.heatDayMap || data.dayMap;
+      const totalDays = HOME_HEAT_WEEKS * 7;
+      const start = addDays(today, -(totalDays - 1));
+      const out = [];
+      for (let i = 0; i < totalDays; i += 1) {
+        const date = addDays(start, i);
+        const key = dateKey(date);
+        const row = map.get(key);
+        out.push({
+          key,
+          date,
+          tokens: row?.tokens || 0,
+          calls: row?.calls || 0,
+        });
+      }
+      return out;
     }
 
     function buildDaySeries(data, range) {
@@ -1473,47 +1504,35 @@
       const peakValue = data.peakContext === null || data.peakContext === 0 ? '—' : formatCompact(data.peakContext);
       const cache = formatPercent(data.cache);
       stats.appendChild(
-        createStatCard(copy.sessions, sessions ? formatCount(sessions) : '—', sessions ? copy.sourceLive : copy.notReported, 'sessions')
+        createStatCard(copy.sessions, sessions ? formatCount(sessions) : '—', '', 'sessions')
       );
       stats.appendChild(
         createStatCard(
           data.kind === 'host' ? copy.calls : copy.samples,
           calls ? formatCount(calls) : '—',
-          data.kind === 'host' ? copy.sourceHost : copy.sourceLive,
+          '',
           'calls'
         )
       );
-      stats.appendChild(createStatCard(copy.tokens, tokenTotal ? formatCompact(tokenTotal) : '—', copy.tokenUnit, 'tokens'));
+      stats.appendChild(createStatCard(copy.tokens, tokenTotal ? formatCompact(tokenTotal) : '—', '', 'tokens'));
       stats.appendChild(
         createStatCard(copy.activeDays, data.activeDays ? formatCount(data.activeDays) : '—', '', 'days')
       );
       stats.appendChild(
-        createStatCard(copy.peakContext, peakValue, peakValue === '—' ? copy.notReported : copy.tokenUnit, 'peak')
+        createStatCard(copy.peakContext, peakValue, '', 'peak')
       );
-      stats.appendChild(createStatCard(copy.favorite, favorite, favorite === '—' ? copy.notReported : '', 'model'));
+      stats.appendChild(createStatCard(copy.favorite, favorite, '', 'model'));
       wrap.appendChild(stats);
 
-      const series = buildDaySeries(data, state.activeRange);
+      const series = buildHeatSeries(data);
       const heat = make('div', 'ag-cs-home-heat');
-      const aligned = [];
-      const first = series[0]?.date || startOfDay(new Date());
-      const offset = first.getDay();
-      for (let i = 0; i < offset; i += 1) aligned.push(null);
-      for (const point of series) aligned.push(point);
-      while (aligned.length % 7 !== 0) aligned.push(null);
-      const columns = aligned.length / 7;
+      const columns = HOME_HEAT_WEEKS;
       heat.style.setProperty('--dsh-prism-home-heat-columns', String(columns));
       heat.setAttribute('role', 'img');
       heat.setAttribute('aria-label', `${copy.heatTitle} · ${copy.heatSub.replace('{n}', String(columns))}`);
       const max = Math.max(0, ...series.map((point) => point.tokens));
-      for (const point of aligned) {
+      for (const point of series) {
         const cell = make('span', 'ag-cs-home-heat-cell');
-        if (!point) {
-          cell.setAttribute('data-empty', '1');
-          cell.setAttribute('aria-hidden', 'true');
-          heat.appendChild(cell);
-          continue;
-        }
         const ratio = max > 0 ? point.tokens / max : 0;
         const level = point.tokens <= 0 ? 0 : ratio >= 0.82 ? 5 : ratio >= 0.58 ? 4 : ratio >= 0.34 ? 3 : ratio >= 0.14 ? 2 : 1;
         cell.setAttribute('data-level', String(level));

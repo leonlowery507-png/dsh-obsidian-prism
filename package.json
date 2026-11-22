@@ -1,6 +1,6 @@
 {
   "name": "dsh-obsidian-prism",
-  "version": "1.0.7-beta.1-dsh.2",
+  "version": "1.0.7-beta.1-dsh.3",
   "description": "Obsidian Prism (黑曜棱镜) for DeepSeek Harness (dsh) — 四套深浅光学配色、会话上下文试管、星空推理滑块、可拖拽自主巡逻的 DeepSeek 像素鲸母子与 Prism 对话气泡、五级水墨流式淡入与双模思考转译套件",
   "license": "GPL-3.0-only",
   "author": "RMvdesi (Upstream Obsidian Prism) & DSH Port Contributors",

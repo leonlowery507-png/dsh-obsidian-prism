@@ -3095,6 +3095,21 @@ test('38. Home Studio 跨热重载、重复 dsh-prism:ready 与孤儿节点场�
 
   assert.equal(doc.querySelectorAll('[data-prism-home-studio="1"]').length, 1, '跨热重载与 ready 事件后只允许存在 1 个仪表盘');
   assert.equal(doc.querySelectorAll('.ag-cs-home-panel').length, 1, '仪表盘主面板数量必须严格为 1');
+
+  // 注入遥测样本后，热力图应展示完整 26 周（182 格），且移出热力图格子后悬浮提示立即隐藏
+  env.sandbox.dispatchEvent(new env.sandbox.CustomEvent('ag-prism:telemetry', {
+    detail: { sessionId: 's1', model: 'DeepSeek-V4.1-Flash', usedTokens: 12000, maxTokens: 1000000, sampledAt: Date.now() },
+  }));
+  env.tick(240);
+  const heatCells = doc.querySelectorAll('.ag-cs-home-heat-cell');
+  assert.equal(heatCells.length, 26 * 7, '热力图应展示完整 26 周 × 7 行 (182 格)');
+  const panelEl = secondApi.getInstance().getElement();
+  const hintEl = panelEl.querySelector('.ag-cs-home-heat-hint');
+  assert.ok(hintEl);
+  heatCells[0].dispatchEvent({ type: 'mouseover', bubbles: true });
+  assert.equal(hintEl.getAttribute('data-shown'), 'true');
+  panelEl.dispatchEvent({ type: 'mouseover', bubbles: true });
+  assert.equal(hintEl.getAttribute('data-shown'), null, '鼠标移出热力图格子后提示气泡应立即隐藏');
 });
 
 test('39. 底部 conv-aura 光效在活跃会话内联挂于输入框下方，并在 hero/blank 首页自动隐藏', t => {

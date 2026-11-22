@@ -3106,12 +3106,25 @@ body[data-prism-theme="alabaster"] .dsh-prism-home-ripple-host::before {
   flex: 0 0 auto;
   align-self: center;
   box-sizing: border-box;
-  width: min(620px, calc(100% - 28px));
+  width: min(468px, calc(100% - 28px));
   max-width: 100%;
-  margin: 0 auto 10px;
+  margin: 14px auto auto;
   padding: 0;
   color-scheme: light dark;
   pointer-events: auto;
+}
+
+/* 首页挂载紧凑仪表盘时：仪表盘自然停靠上方，Hero 标题与输入框自然居中偏下 */
+[data-conversation-content]:is([data-content-phase="hero"], [data-content-phase="blank"])
+  [data-conversation-scroll]:has(> .dsh-prism-home-studio-seat) {
+  justify-content: flex-start;
+}
+
+[data-conversation-content]:is([data-content-phase="hero"], [data-content-phase="blank"])
+  [data-conversation-scroll]:has(> .dsh-prism-home-studio-seat)
+  > [data-composer-seat] {
+  margin-top: 12px;
+  margin-bottom: auto;
 }
 
 .dsh-prism-home-studio-panel.ag-cs-home-panel {
@@ -3153,14 +3166,14 @@ body[data-prism-theme="alabaster"] .dsh-prism-home-ripple-host::before {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  width: min(620px, 100%);
+  width: min(468px, 100%);
   max-width: 100%;
-  max-height: min(438px, 47vh);
+  max-height: min(326px, 42vh);
   min-height: 0;
   margin: 0 auto;
   overflow: hidden;
   border: 0.5px solid var(--dps-border);
-  border-radius: 15px;
+  border-radius: 13px;
   background-color: var(--dps-panel);
   background-image: var(--dps-sheen);
   box-shadow: var(--dps-shadow);
@@ -3365,10 +3378,10 @@ body[data-prism-theme="alabaster"] .dsh-prism-home-studio-panel.ag-cs-home-panel
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   box-sizing: border-box;
-  min-height: 50px;
-  padding: 11px 13px 9px;
+  min-height: 38px;
+  padding: 7px 11px 6px;
   border-bottom: 0.5px solid var(--dps-border);
   background: linear-gradient(180deg, color-mix(in srgb, var(--dps-panel) 94%, transparent), color-mix(in srgb, var(--dps-panel) 78%, transparent));
   backdrop-filter: blur(12px);
@@ -3378,7 +3391,7 @@ body[data-prism-theme="alabaster"] .dsh-prism-home-studio-panel.ag-cs-home-panel
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 9px;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -3386,13 +3399,13 @@ body[data-prism-theme="alabaster"] .dsh-prism-home-studio-panel.ag-cs-home-panel
   display: grid;
   flex: none;
   place-items: center;
-  width: 25px;
-  height: 25px;
+  width: 21px;
+  height: 21px;
   border: 0.5px solid var(--dps-active-border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--dps-active);
   color: var(--dps-accent);
-  box-shadow: inset 0 0 12px color-mix(in srgb, var(--dps-accent) 9%, transparent);
+  box-shadow: inset 0 0 10px color-mix(in srgb, var(--dps-accent) 9%, transparent);
 }
 
 html[data-ag-cs-logo-ink="accent"] :is(.WOwLGG_fish, .dsh-prism-home-brand-mark) {
@@ -3404,8 +3417,8 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
 }
 
 .dsh-prism-home-brand-mark svg {
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
 }
 
 .dsh-prism-home-brand-labels {
@@ -3498,10 +3511,10 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   box-sizing: border-box;
-  min-height: 31px;
-  padding: 5px 13px 5px;
+  min-height: 26px;
+  padding: 3px 11px;
   border-bottom: 0.5px solid var(--dps-border);
   background: color-mix(in srgb, var(--dps-panel-2) 58%, transparent);
 }
@@ -3534,7 +3547,8 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
   z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
@@ -3556,8 +3570,8 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
 .dsh-prism-home-view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 11px 13px 13px;
+  gap: 8px;
+  padding: 8px 11px 10px;
 }
 
 /* --------------------------------------------------------------------------
@@ -3567,18 +3581,18 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
 .ag-cs-home-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 5px;
 }
 
 .ag-cs-home-stat {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   box-sizing: border-box;
-  padding: 7px 9px;
+  padding: 5px 8px;
   border: 0.5px solid var(--dps-border);
-  border-radius: 8px;
+  border-radius: 7px;
   background: var(--dps-panel-3);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dps-ink) 3%, transparent);
 }
@@ -3586,10 +3600,10 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
 .ag-cs-home-stat-label {
   overflow: hidden;
   color: var(--dps-muted);
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  line-height: 13px;
+  line-height: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3598,10 +3612,10 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
   overflow: hidden;
   color: var(--dps-ink);
   font-family: var(--ag-cs-mono-stack, "Cascadia Mono", "SFMono-Regular", Consolas, monospace);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: -0.02em;
-  line-height: 17px;
+  line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -3609,7 +3623,7 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
 
 .ag-cs-home-stat[data-stat="model"] .ag-cs-home-stat-value {
   font-family: var(--font-sans, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 550;
   letter-spacing: 0;
 }
@@ -3654,31 +3668,24 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
 }
 
 .ag-cs-home-heat {
-  --dsh-prism-home-heat-columns: 13;
+  --dsh-prism-home-heat-columns: 26;
   position: relative;
   display: grid;
   grid-auto-flow: column;
-  grid-template-columns: repeat(var(--dsh-prism-home-heat-columns), 11px);
-  grid-template-rows: repeat(7, 11px);
-  gap: 3px;
-  width: max-content;
-  max-width: 100%;
-  padding: 3px 2px 4px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  contain: layout style;
-}
-
-.ag-cs-home-heat::-webkit-scrollbar {
-  display: none;
+  grid-template-columns: repeat(var(--dsh-prism-home-heat-columns), minmax(0, 1fr));
+  grid-template-rows: repeat(7, 9px);
+  gap: 2.5px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 0 3px;
+  overflow: visible;
 }
 
 .ag-cs-home-heat-cell {
   position: relative;
   display: block;
-  width: 11px;
-  height: 11px;
+  width: 100%;
+  height: 9px;
   border-radius: 2px;
   background: var(--dps-heat-0);
   transition:
@@ -3720,15 +3727,15 @@ html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-m
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 5;
+  z-index: 10;
   max-width: 248px;
-  padding: 3px 7px;
+  padding: 2px 7px;
   border: 0.5px solid var(--dps-border-strong);
   border-radius: 999px;
   background: color-mix(in srgb, var(--dps-ink) 94%, var(--dps-panel));
   box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
   color: var(--dps-panel);
-  font-size: 9px;
+  font-size: 9.5px;
   line-height: 14px;
   white-space: nowrap;
   pointer-events: none;
