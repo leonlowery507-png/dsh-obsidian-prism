@@ -1217,7 +1217,8 @@ void main() {
 
       let paintedAny = false;
       for (const entry of trackedTargets) {
-        if (!entry.box?.isConnected) continue;
+        if (!entry.box?.isConnected || !isElementVisible(entry.box)) continue;
+        if (entry.box.closest?.('[data-content-phase="settling"], [data-phase="settling"]')) continue;
         const r = entry.box.getBoundingClientRect();
         if (r.width < 12 || r.height < 12) continue;
         const maxRange = 260;
@@ -1273,16 +1274,50 @@ void main() {
       clearOverlay();
     }
 
+    function clearImmediate() {
+      cacheDirty = true;
+      if (rafId && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      clearOverlay();
+    }
+
+    function onLayoutShift() {
+      if (isDestroyed()) return;
+      cacheDirty = true;
+      if (!wasCleared) {
+        clearOverlay();
+        if (!rafId && !isDisabled() && typeof requestAnimationFrame === 'function') {
+          rafId = requestAnimationFrame(drawFrame);
+        }
+      }
+    }
+
     return {
       onPointerMove,
       onPointerLeave,
+      clearImmediate,
+      onLayoutShift,
       markDirty() {
         cacheDirty = true;
-        if (isDisabled()) clearOverlay();
+        if (isDisabled()) {
+          clearOverlay();
+          return;
+        }
+        if (!wasCleared) {
+          clearOverlay();
+          if (!rafId && typeof requestAnimationFrame === 'function') {
+            rafId = requestAnimationFrame(drawFrame);
+          }
+        }
       },
       invalidateMetrics() {
         cacheDirty = true;
-        if (!rafId && typeof requestAnimationFrame === 'function') rafId = requestAnimationFrame(drawFrame);
+        if (!wasCleared) clearOverlay();
+        if (!rafId && !isDisabled() && typeof requestAnimationFrame === 'function') {
+          rafId = requestAnimationFrame(drawFrame);
+        }
       },
       teardown() {
         if (rafId && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(rafId);
@@ -2642,6 +2677,7 @@ void main() {
 
     const onPtrMove = (ev) => rimCanvas.onPointerMove(ev);
     const onPtrLeave = () => rimCanvas.onPointerLeave();
+    const onLayoutShift = () => rimCanvas.onLayoutShift();
     const onWinBlur = () => {
       setAttrIfChanged(d?.documentElement, 'data-ag-cs-win-blur', '1');
       rimCanvas.onPointerLeave();
@@ -2652,12 +2688,20 @@ void main() {
       w.addEventListener('pointermove', onPtrMove, { passive: true });
       w.addEventListener('blur', onWinBlur, { passive: true });
       w.addEventListener('focus', onWinFocus, { passive: true });
+      w.addEventListener('resize', onLayoutShift, { passive: true });
+      w.addEventListener('scroll', onLayoutShift, { passive: true, capture: true });
       d?.documentElement?.addEventListener?.('mouseleave', onPtrLeave, { passive: true });
+      d?.addEventListener?.('transitionstart', onLayoutShift, { passive: true, capture: true });
+      d?.addEventListener?.('transitionend', onLayoutShift, { passive: true, capture: true });
       cleanups.push(() => {
         w.removeEventListener('pointermove', onPtrMove);
         w.removeEventListener('blur', onWinBlur);
         w.removeEventListener('focus', onWinFocus);
+        w.removeEventListener('resize', onLayoutShift);
+        w.removeEventListener('scroll', onLayoutShift, true);
         d?.documentElement?.removeEventListener?.('mouseleave', onPtrLeave);
+        d?.removeEventListener?.('transitionstart', onLayoutShift, true);
+        d?.removeEventListener?.('transitionend', onLayoutShift, true);
       });
     }
 
@@ -2714,26 +2758,33 @@ void main() {
       const spaObs = new MutationObserver((mutations) => {
         if (destroyed) return;
         let hasExternalStructuralMut = false;
+        let hasPhaseTransition = false;
         for (let i = 0; i < mutations.length; i++) {
           const t = mutations[i]?.target;
           if (!t || isInsideForeignWidget(t)) continue;
-          if (
-            mutations[i].type === 'attributes' ||
-            mutations[i].addedNodes?.length ||
-            mutations[i].removedNodes?.length
-          ) {
+          if (mutations[i].type === 'attributes') {
+            hasPhaseTransition = true;
             hasExternalStructuralMut = true;
             break;
           }
+          if (mutations[i].addedNodes?.length || mutations[i].removedNodes?.length) {
+            hasExternalStructuralMut = true;
+          }
         }
         if (!hasExternalStructuralMut) return;
+        // 阶段切换（如新建对话发送后 hero -> settling -> active）零延迟清掉旧位置棱镜边，避免半空卡住残影
+        if (hasPhaseTransition) {
+          rimCanvas.clearImmediate();
+        } else {
+          rimCanvas.onLayoutShift();
+        }
         if (spaKeepAliveTimer) clearTimeout(spaKeepAliveTimer);
         spaKeepAliveTimer = setTimeout(() => {
           spaKeepAliveTimer = 0;
           if (destroyed) return;
           try {
             ensureOpticsPortalLayer();
-            rimCanvas.markDirty();
+            rimCanvas.invalidateMetrics();
             convAura.sync();
             smoothCaret.queue(false);
           } catch {}
@@ -2743,7 +2794,7 @@ void main() {
         childList: true,
         subtree: true,
         attributes: true,
-        attributeFilter: ['data-content-phase'],
+        attributeFilter: ['data-content-phase', 'data-phase'],
       });
       cleanups.push(() => {
         spaObs.disconnect();

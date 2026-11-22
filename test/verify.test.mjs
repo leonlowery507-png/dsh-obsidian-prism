@@ -3152,3 +3152,56 @@ test('39. 底部 conv-aura 光效在活跃会话内联挂于输入框下方，�
   env.tick(180);
   assert.equal(bounds.style.display, '', '切回 active 对话页应恢复显示 conv-aura');
 });
+
+test('40. 新建对话发送后输入框下移，prism-rim-canvas 立即清空旧位置残影且不再半空悬停', t => {
+  const env = createMockBrowserEnv(), { doc } = env;
+  loadBrowserModule(env, 'src/optics-motion.js');
+  const optics = env.sandbox.DSHPrismOptics;
+  assert.ok(optics);
+
+  const root = add(doc.body, 'div', { id: 'root' });
+  const content = add(root, 'div', {
+    'data-conversation-content': '',
+    'data-content-phase': 'hero',
+    'data-conversation-session': 'rim-shift-session',
+  });
+  const composerCard = add(content, 'div', { class: 'dsh-composer', 'data-dsh-composer': 'true' });
+  let rect = { left: 300, top: 420, width: 600, height: 110, right: 900, bottom: 530 };
+  composerCard.getBoundingClientRect = () => rect;
+
+  const bridge = createModuleBridge({ theme: 'crystal', motionLevel: 'ultra', ambientIntensity: '100' });
+  const ctrl = optics.init(bridge);
+  t.after(() => optics.destroy());
+  env.tick(100);
+
+  // 在首页输入框附近移动鼠标，绘制出棱镜追光边
+  ctrl.rimCanvas.onPointerMove({ clientX: 500, clientY: 470 });
+  env.tick(50);
+  const rimCv = doc.querySelector('.dsh-optics-rim-cv');
+  assert.ok(rimCv, '应创建棱镜追光 Canvas');
+  const ctx = rimCv.getContext('2d');
+  let clears = 0;
+  let strokes = 0;
+  const origClear = ctx.clearRect.bind(ctx);
+  const origStroke = ctx.stroke.bind(ctx);
+  ctx.clearRect = (...args) => { clears += 1; return origClear(...args); };
+  ctx.stroke = (...args) => { strokes += 1; return origStroke(...args); };
+
+  // 触发一次绘制确保画布有内容
+  ctrl.rimCanvas.onPointerMove({ clientX: 505, clientY: 472 });
+  env.tick(50);
+  assert.ok(strokes >= 1, '鼠标在首页输入框附近时应绘制棱镜边');
+
+  // 模拟发送消息：输入框移动到屏幕底部且远离当前鼠标位置（> 260px），同时阶段切换为 settling -> active
+  clears = 0;
+  strokes = 0;
+  rect = { left: 300, top: 820, width: 600, height: 110, right: 900, bottom: 930 };
+  content.setAttribute('data-content-phase', 'settling');
+  env.tick(1);
+  // 阶段切换在微任务即刻清屏（远早于 120ms 防抖），绝不卡在旧位置
+  assert.ok(clears >= 1, '阶段切换瞬间应立即清空旧位置棱镜边残影');
+
+  content.setAttribute('data-content-phase', 'active');
+  env.tick(200);
+  assert.equal(strokes, 0, '鼠标留在旧位置且远离新输入框时不应再绘制半空残影');
+});

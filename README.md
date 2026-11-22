@@ -86,7 +86,7 @@ dsh-obsidian-prism/
 ├── preview/
 │   └── dsh-stage.html            # DeepSeek Harness 离线交互预览舞台
 └── test/
-    └── verify.test.mjs           # Node:test 自动化完整性与语法回归测试套件 (48 tests)
+    └── verify.test.mjs           # Node:test 自动化完整性与语法回归测试套件 (49 tests)
 ```
 
 ---
@@ -121,7 +121,7 @@ Windows 示例路径形式：`dsh plugin --profile desktop add link:D:/plugins/d
 # 编译生成 lib/client.js、dist/dsh-prism.css、dist/dsh-prism.bundle.js 与 dist/dsh-prism.userscript.js
 npm run build
 
-# 运行全套自动化验证测试（48/48）
+# 运行全套自动化验证测试（49/49）
 npm test
 ```
 
