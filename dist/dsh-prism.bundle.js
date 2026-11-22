@@ -5,7 +5,7 @@
  * Downstream DSH Port Modified: 2026-11-22
  */
 
-/* Build Hash: 4uj8mw | Version: 1.0.7-beta.1-dsh.1 */
+/* Build Hash: nvgb9y | Version: 1.0.7-beta.1-dsh.2 */
 
 // === [1/10] src/tokens-palettes.js ===
 ;(function (root, window, self, document, module, exports) {
@@ -1053,7 +1053,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this, function (G) {
   'use strict';
 
-  const VERSION = '1.0.7-beta.1-dsh.1';
+  const VERSION = '1.0.7-beta.1-dsh.2';
   const STORAGE_KEY = 'dsh_obsidian_prism_config';
   const LEGACY_PRISM_STORAGE_KEY = 'ag-prism:config';
   const LEGACY_V3_STORAGE_KEY = 'agClaudeStyle.settings.v3';
@@ -15387,7 +15387,7 @@ void main() {
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this, function (G) {
   'use strict';
 
-  const VERSION = '1.0.7-beta.1-dsh.1';
+  const VERSION = '1.0.7-beta.1-dsh.2';
   const SETTINGS_SCHEMA_REVISION = '1.0.7';
   const MIN_CODE_FOLD_LINES = 48;
   const SONAR_DURATION_MS = 720;
@@ -18485,8 +18485,8 @@ void main() {
   'use strict';
   if (!G) return;
 
-  var VERSION = "1.0.7-beta.1-dsh.1";
-  var CODE_HASH = "4uj8mw";
+  var VERSION = "1.0.7-beta.1-dsh.2";
+  var CODE_HASH = "nvgb9y";
   var ACTIVE_INST = null;
   var BOOT_SCHEDULED = false;
 

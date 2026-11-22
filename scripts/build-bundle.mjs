@@ -808,7 +808,7 @@ export function buildBundle(options = {}) {
   const distDir = path.join(rootDir, 'dist');
   const libDir = path.join(rootDir, 'lib');
 
-  let version = '1.0.7-beta.1-dsh.1';
+  let version = '1.0.7-beta.1-dsh.2';
   if (fs.existsSync(pkgPath)) {
     try {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
