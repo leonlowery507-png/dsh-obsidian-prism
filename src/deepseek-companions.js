@@ -362,7 +362,7 @@
     let lastCollision = null;
     const doc = host.ownerDocument;
     const win = doc?.defaultView || root;
-    const now = () => Number(win.performance?.now?.() || Date.now());
+    const now = () => (typeof win.performance?.now === 'function' ? Number(win.performance.now()) : Date.now());
 
     function paint(context, x, y, width, height, color) {
       context.fillStyle = color;
@@ -398,32 +398,65 @@
       return (actor.isCalf ? calfPalettes : palettes)[mode] || (actor.isCalf ? calfPalettes.whale : palettes.whale);
     }
 
-    function drawAdult(actor, current) {
+    function drawAdult(actor, current = now()) {
       const context = actor.context;
       if (!context) return;
       const palette = actorPalette(actor);
       const moving = actor.walking && !actor.pointer && !reducedMotion;
+      const idleAlive = !moving && !actor.pointer && !reducedMotion;
+      const draggingAlive = Boolean(actor.pointer) && !reducedMotion;
       const phase = Math.floor(current / 180) % 2;
-      const bounce = moving ? phase : (reducedMotion ? 0 : Math.floor(current / 720) % 2);
-      const wiggle = moving ? phase : 0;
+      const idleTailPhase = Math.floor(current / 420) % 4;
+      const bounce = moving
+        ? phase
+        : (reducedMotion ? 0 : Math.floor(current / 520) % 2);
+      const tailDx = moving
+        ? phase
+        : draggingAlive
+          ? (Math.floor(current / 140) % 2)
+          : (idleAlive && idleTailPhase === 1 ? 1 : 0);
+      const tailDy = idleAlive && idleTailPhase === 2 ? 1 : 0;
+      const blinkCycle = (current + 400) % 3600;
+      const blinking = !reducedMotion && !streaming && !actor.pointer && blinkCycle >= 3420;
       context.clearRect(0, 0, ADULT_W, ADULT_H);
       context.imageSmoothingEnabled = false;
-      drawParts(context, adultTail, palette, 0, wiggle);
+      drawParts(context, adultTail, palette, tailDy, tailDx);
       if (mode === 'orca') {
         drawParts(context, [
           [10, 0, 1, 2, 'outline'], [9, 1, 3, 2, 'outline'], [8, 2, 4, 2, 'outline'],
           [10, 0, 1, 1, 'saddle'], [9, 1, 2, 2, 'saddle'], [8, 3, 3, 1, 'saddle'],
-        ], palette);
+        ], palette, bounce);
       }
       drawParts(context, adultOutline, palette, bounce);
       drawParts(context, adultFill, palette, bounce);
       drawParts(context, adultMarks[mode] || adultMarks.whale, palette, bounce);
-      paint(context, 5, 7 + bounce, 2, 2, palette.eye);
-      paint(context, 5, 7 + bounce, 1, 1, palette.glint);
+      // 原地待机划水：胸鳍轻微下压保持水下悬浮感
+      if (idleAlive && (idleTailPhase === 1 || idleTailPhase === 2)) {
+        paint(context, 10, 10 + bounce, 2, 1, palette.fin);
+      }
+      if (blinking) {
+        paint(context, 5, 8 + bounce, 2, 1, palette.eye);
+      } else {
+        paint(context, 5, 7 + bounce, 2, 2, palette.eye);
+        paint(context, 5, 7 + bounce, 1, 1, palette.glint);
+      }
       if (mode === 'orca') paint(context, 7, 7 + bounce, 1, 1, palette.outline);
       if (streaming || moving) {
-        paint(context, 17, 2 - wiggle, 1, 1, palette.bubble);
+        paint(context, 17, 2 - tailDx, 1, 1, palette.bubble);
         paint(context, 19, 0, 1, 1, palette.bubble);
+      } else if (idleAlive) {
+        // 原地待机呼吸：从头顶气孔周期性呼出上升像素水泡
+        const breathCycle = current % 2800;
+        const bx = mode === 'orca' ? 6 : 7;
+        if (breathCycle < 380) {
+          paint(context, bx, 2, 1, 1, palette.bubble);
+        } else if (breathCycle < 780) {
+          paint(context, bx, 1, 1, 1, palette.bubble);
+          paint(context, bx + 1, 2, 1, 1, palette.bubble);
+        } else if (breathCycle < 1140) {
+          paint(context, bx - 1, 0, 1, 1, palette.bubble);
+          paint(context, bx + 1, 1, 1, 1, palette.bubble);
+        }
       }
       if (current < actor.sparkUntil) {
         const sx = actor.direction < 0 ? 17 : 5;
@@ -434,26 +467,50 @@
       if (current < actor.hopUntil) paint(context, 15, 3, 2, 1, palette.spark);
     }
 
-    function drawCalf(actor, current) {
+    function drawCalf(actor, current = now()) {
       const context = actor.context;
       if (!context) return;
       const palette = actorPalette(actor);
       const moving = actor.walking && !actor.pointer && !reducedMotion;
+      const idleAlive = !moving && !actor.pointer && !reducedMotion;
+      const draggingAlive = Boolean(actor.pointer) && !reducedMotion;
       const phase = Math.floor((current + 90) / 240) % 2;
-      const bounce = moving ? phase : (reducedMotion ? 0 : Math.floor((current + 180) / 820) % 2);
-      const wiggle = moving ? phase : 0;
+      const idleTailPhase = Math.floor((current + 180) / 340) % 4;
+      const bounce = moving
+        ? phase
+        : (reducedMotion ? 0 : Math.floor((current + 220) / 460) % 2);
+      const tailDx = moving
+        ? phase
+        : draggingAlive
+          ? (Math.floor((current + 70) / 130) % 2)
+          : (idleAlive && idleTailPhase === 3 ? 1 : 0);
+      const tailDy = idleAlive && idleTailPhase === 1 ? 1 : 0;
+      const blinkCycle = (current + 1500) % 2900;
+      const blinking = !reducedMotion && !streaming && !actor.pointer && blinkCycle >= 2740;
       context.clearRect(0, 0, CALF_W, CALF_H);
       context.imageSmoothingEnabled = false;
-      drawParts(context, calfTail, palette, 0, wiggle);
+      drawParts(context, calfTail, palette, tailDy, tailDx);
       drawParts(context, calfOutline, palette, bounce);
       drawParts(context, calfFill, palette, bounce);
       drawParts(context, calfMarks, palette, bounce);
-      paint(context, 3, 5 + bounce, 1, 2, palette.eye);
-      paint(context, 3, 5 + bounce, 1, 1, palette.glint);
+      if (blinking) {
+        paint(context, 3, 6 + bounce, 2, 1, palette.eye);
+      } else {
+        paint(context, 3, 5 + bounce, 1, 2, palette.eye);
+        paint(context, 3, 5 + bounce, 1, 1, palette.glint);
+      }
       if (mode === 'orca') paint(context, 5, 4 + bounce, 3, 1, palette.patch);
       if (streaming || moving) {
         paint(context, 12, 1, 1, 1, palette.bubble);
         paint(context, 13, 0, 1, 1, palette.bubble);
+      } else if (idleAlive) {
+        // 幼鲸待机呼吸微泡（与大鲸错开周期）
+        const breathCycle = (current + 950) % 2300;
+        if (breathCycle < 420) {
+          paint(context, 5, 1, 1, 1, palette.bubble);
+        } else if (breathCycle < 860) {
+          paint(context, 4, 0, 1, 1, palette.bubble);
+        }
       }
       if (current < actor.sparkUntil) {
         const sx = actor.direction < 0 ? 12 : 1;
@@ -492,10 +549,12 @@
       };
 
       actor.maxX = () => Math.max(0, stageWidth() - width - 8);
-      actor.render = current => {
+      actor.render = (current = now()) => {
         if (!actor.owner) return;
-        const sway = actor.walking && !actor.pointer && !reducedMotion
-          ? Math.round(Math.sin((current + (isCalf ? 90 : 0)) / 230))
+        const sway = !actor.pointer && !reducedMotion
+          ? actor.walking
+            ? Math.round(Math.sin((current + (isCalf ? 90 : 0)) / 230))
+            : Math.round(Math.sin((current + (isCalf ? 310 : 0)) / (isCalf ? 440 : 520)))
           : 0;
         const squashT = reducedMotion || current >= actor.squashUntil
           ? 0
@@ -930,10 +989,21 @@
       if (doc?.hidden) stopLoop();
       else ensureLoop();
     };
+    const onFocus = () => {
+      if (!doc?.hidden) ensureLoop();
+    };
     win.addEventListener?.('resize', onViewportChange, { passive: true });
+    win.addEventListener?.('focus', onFocus, { passive: true });
     doc?.addEventListener?.('visibilitychange', onVisibilityChange);
 
     return {
+      sync() {
+        sync();
+      },
+      wake() {
+        if (disposed || reducedMotion || mode === 'off') return;
+        if (!frameId && isVisible()) ensureLoop();
+      },
       setState(next = {}) {
         if ('mode' in next) {
           const previous = mode;
@@ -969,6 +1039,7 @@
           streaming,
           reducedMotion,
           visible: Boolean(actors.adult.owner && actors.calf.owner),
+          animating: Boolean(frameId),
           x: Math.round(actors.adult.x),
           y: Math.round(actors.adult.y),
           direction: actors.adult.direction < 0 ? 'left' : 'right',
@@ -1002,6 +1073,7 @@
         if (collisionClearTimer) win.clearTimeout?.(collisionClearTimer);
         collisionClearTimer = 0;
         win.removeEventListener?.('resize', onViewportChange);
+        win.removeEventListener?.('focus', onFocus);
         doc?.removeEventListener?.('visibilitychange', onVisibilityChange);
         actors.adult.remove();
         actors.calf.remove();

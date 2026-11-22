@@ -3205,3 +3205,72 @@ test('40. 新建对话发送后输入框下移，prism-rim-canvas 立即清空�
   env.tick(200);
   assert.equal(strokes, 0, '鼠标留在旧位置且远离新输入框时不应再绘制半空残影');
 });
+
+test('41. 像素小宠在舞台重挂后自动恢复循环，且原地待机时持续驱动呼吸摆尾、眨眼与水泡动画', t => {
+  const env = createMockBrowserEnv(), { doc } = env;
+  vm.runInNewContext(readText('src/deepseek-companions.js'), env.sandbox, { filename: 'deepseek-companions.js' });
+  const api = env.sandbox.DSHPrismCompanions;
+
+  // 1) 模拟 widgets 先创建离屏舞台再挂载、以及会话切换卸载重挂
+  const stage = doc.createElement('div');
+  stage.clientWidth = 360;
+  stage.offsetWidth = 360;
+  const rig = api.mount(stage, { mode: 'whale', reducedMotion: false });
+  t.after(() => rig.dispose());
+  assert.equal(rig.getLayoutSnapshot().animating, false, '离屏舞台未接入 DOM 前不应空跑循环');
+
+  doc.body.appendChild(stage);
+  rig.sync();
+  assert.equal(rig.getLayoutSnapshot().animating, true, '接入 DOM 并 sync 后应立即启动动画循环');
+
+  // 模拟 React 重建输入框：短暂脱离 DOM -> tick 停循环 -> 重挂回 DOM -> sync 唤醒
+  stage.remove();
+  env.tick(32);
+  assert.equal(rig.getLayoutSnapshot().animating, false, '脱离 DOM 后动画循环应暂停节省资源');
+
+  doc.body.appendChild(stage);
+  rig.sync();
+  assert.equal(rig.getLayoutSnapshot().animating, true, '重挂 DOM 后应自动恢复动画循环');
+
+  // 2) 进入原地待机态，拦截 canvas 像素绘制并验证待机动画帧变化
+  const owner = stage.querySelector('[data-prism-companion]');
+  const canvas = owner.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  const frames = [];
+  let currentRects = [];
+  const origClear = ctx.clearRect.bind(ctx);
+  const origFill = ctx.fillRect.bind(ctx);
+  ctx.clearRect = (...args) => {
+    if (currentRects.length) frames.push(currentRects.join(';'));
+    currentRects = [];
+    return origClear(...args);
+  };
+  ctx.fillRect = (x, y, w, h) => {
+    currentRects.push(`${x},${y},${w},${h},${ctx.fillStyle}`);
+    return origFill(x, y, w, h);
+  };
+
+  // 通过松手进入原地待机，确认无 NaN 且在 pauseUntil 期间为 idle
+  sendEvent(env, owner, 'pointerdown', { pointerId: 31, button: 0, isPrimary: true, clientX: 120, clientY: 90 });
+  sendEvent(env, owner, 'pointerup', { pointerId: 31, button: 0, isPrimary: true, clientX: 120, clientY: 90 });
+  assert.equal(owner.dataset.state, 'idle', '松手后应进入原地待机态');
+  assert.doesNotMatch(owner.style.transform, /NaN/, '无参渲染绝不能产生 NaN 坐标');
+
+  frames.length = 0;
+  const idleTransforms = new Set();
+  for (let i = 0; i < 12; i++) {
+    env.tick(50);
+    if (owner.dataset.state === 'idle') idleTransforms.add(owner.style.transform);
+  }
+  if (currentRects.length) frames.push(currentRects.join(';'));
+  const uniqueIdleFrames = new Set(frames);
+  assert.ok(uniqueIdleFrames.size >= 2, `原地待机期间画布动画帧应持续变化，实际帧种类: ${uniqueIdleFrames.size}`);
+  assert.ok(idleTransforms.size >= 2, `原地待机期间应有柔和上下浮沉位移动画，实际 transform 种类: ${idleTransforms.size}`);
+
+  // 3) 切换至降级动效后，原地待机必须严格静止
+  rig.setState({ reducedMotion: true });
+  assert.equal(rig.getLayoutSnapshot().animating, false, '降级动效下应停止循环');
+  const reducedTransform = owner.style.transform;
+  env.tick(600);
+  assert.equal(owner.style.transform, reducedTransform, '降级动效下待机位置必须保持静止');
+});

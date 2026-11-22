@@ -121,7 +121,7 @@ Windows 示例路径形式：`dsh plugin --profile desktop add link:D:/plugins/d
 # 编译生成 lib/client.js、dist/dsh-prism.css、dist/dsh-prism.bundle.js 与 dist/dsh-prism.userscript.js
 npm run build
 
-# 运行全套自动化验证测试（49/49）
+# 运行全套自动化验证测试（50/50）
 npm test
 ```
 

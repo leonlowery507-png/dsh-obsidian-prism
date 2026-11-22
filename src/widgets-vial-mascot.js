@@ -4422,8 +4422,12 @@
         mascotHost.remove();
         return false;
       }
-      if (mascotHost.parentElement !== host) host.appendChild(mascotHost);
-      if (mascotHost.getAttribute('data-hidden') !== '0') mascotHost.setAttribute('data-hidden', '0');
+      const reattached = mascotHost.parentElement !== host;
+      if (reattached) host.appendChild(mascotHost);
+      const wasHidden = mascotHost.getAttribute('data-hidden') !== '0';
+      if (wasHidden) mascotHost.setAttribute('data-hidden', '0');
+      if (reattached || wasHidden) mascotInst?.sync?.();
+      else mascotInst?.wake?.();
       return true;
     };
 
