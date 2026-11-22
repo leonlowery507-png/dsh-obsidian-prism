@@ -1,0 +1,90 @@
+/* Pixel companions follow the upstream suite's low-resolution sprite language. */
+.dsh-mascot-stage > [data-prism-companion] {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  box-sizing: border-box;
+  width: 44px;
+  height: 32px;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+  transform-origin: 50% 100%;
+  will-change: transform;
+  image-rendering: pixelated;
+}
+.dsh-mascot-stage > [data-prism-companion-calf] {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  box-sizing: border-box;
+  width: 28px;
+  height: 22px;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  z-index: 1;
+  transform-origin: 50% 100%;
+  will-change: transform;
+  image-rendering: pixelated;
+}
+.dsh-mascot-stage > :is([data-prism-companion], [data-prism-companion-calf])[data-dragging="1"] {
+  z-index: 5;
+  cursor: grabbing;
+}
+.dsh-mascot-stage > :is([data-prism-companion], [data-prism-companion-calf]):focus-visible {
+  outline: 2px solid var(--primary, #4285f4);
+  outline-offset: 2px;
+}
+.prism-pixel-sprite {
+  position: relative;
+  display: block;
+  pointer-events: none;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+.prism-pixel-sprite--adult {
+  width: 44px;
+  height: 32px;
+}
+.prism-pixel-sprite--calf {
+  width: 28px;
+  height: 22px;
+}
+.prism-pixel-shadow {
+  position: absolute;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--foreground, #0f172a) 16%, transparent);
+  box-shadow:
+    2px 0 0 color-mix(in srgb, var(--foreground, #0f172a) 10%, transparent),
+    -2px 0 0 color-mix(in srgb, var(--foreground, #0f172a) 10%, transparent);
+}
+.prism-pixel-shadow--adult {
+  left: 11px;
+  width: 23px;
+}
+.prism-pixel-shadow--calf {
+  left: 6px;
+  width: 16px;
+}
+.dsh-mascot-stage > [data-prism-companion][data-dragging="1"] .prism-pixel-shadow {
+  opacity: .36;
+  transform: scaleX(.72);
+}
+.dsh-mascot-stage > [data-prism-companion-calf][data-dragging="1"] .prism-pixel-shadow {
+  opacity: .36;
+  transform: scaleX(.72);
+}
+.dsh-mascot-stage > :is([data-prism-companion], [data-prism-companion-calf])[data-reduced-motion="1"] {
+  will-change: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dsh-mascot-stage > :is([data-prism-companion], [data-prism-companion-calf]) {
+    will-change: auto;
+  }
+}

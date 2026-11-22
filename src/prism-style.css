@@ -1,0 +1,2877 @@
+/* ==========================================================================
+ * Obsidian Prism for DeepSeek Harness (dsh-obsidian-prism)
+ * 精密光学视觉系统与动效编排样式表 (src/prism-style.css)
+ *
+ * 完整适配真实 DeepSeek Harness Desktop (React SPA) 与交互预览舞台：
+ * 1. 四大原版主题预设：obsidian（深空黑曜）、warm（暖炭玄岩）、crystal（白昼冷晶）、alabaster（暖白画册）
+ *    在 :root[data-prism-theme="..."] 下高优先级覆写全部真实 DSH --dsw-alias-* / --dsw-font-* 与 --ag-prism-* 令牌
+ * 2. 五大工业强调色预设：follow / cobalt / iris / amber / mono（暗/亮双态完整覆写 --dsw-alias-accent/brand/button-*）
+ * 3. 三档精密圆角（sharp / balanced / soft）、等宽代码字体栈与连字控制、四档氛围光密度、四档物理动效层级
+ * 4. 0.5px 镜面描边、Console Well 下沉控制台槽、毛玻璃悬浮输入座舱、吸顶代码块头与 >=48 行折叠遮罩
+ * 5. React SPA 独立挂载层 (#dsh-obsidian-prism-optics-layer) 与 z-index 避让策略：
+ *    严格避让右下角 dsh-whale-widget (.dshwv-root, z-index: 9999) 与右侧 dsh-better-sidebar
+ * 6. 全套微件样式：动态上下文用量试管、星空/切割水晶滑块、鲸伴宠舞台、原生设置中心嵌入视图与独立弹窗、对话标尺、思考翻译
+ * ========================================================================== */
+
+@property --ag-fiber-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* --------------------------------------------------------------------------
+ * 一、基础光学令牌与默认深空黑曜 (Obsidian) 基线
+ * -------------------------------------------------------------------------- */
+:root,
+html[data-ag-cs-style],
+html[data-prism-theme] {
+  /* 物理缓动与弹簧曲线 */
+  --ag-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ag-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ag-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ag-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ag-spring-sidebar: cubic-bezier(0.22, 1.08, 0.36, 1);
+
+  /* 默认圆角阶梯 (balanced) */
+  --ag-cs-r-sm: 4px;
+  --ag-cs-r-md: 6px;
+  --ag-cs-r-lg: 10px;
+  --ag-prism-radius-sm: var(--ag-cs-r-sm);
+  --ag-prism-radius-md: var(--ag-cs-r-md);
+  --ag-prism-radius-lg: var(--ag-cs-r-lg);
+
+  /* 字体栈 */
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei UI", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --ag-cs-mono-stack: var(--editor-font-family, "JetBrains Mono", "Google Sans Code", "Cascadia Code", Consolas, ui-monospace, monospace);
+  --font-mono: var(--ag-cs-mono-stack);
+
+  /* 四色光学色散光谱基准与氛围强度乘子 */
+  --ag-prism-cobalt: #4285F4;
+  --ag-prism-iris: #9B72CB;
+  --ag-prism-coral: #EA4335;
+  --ag-prism-amber: #FBBC04;
+  --ag-ambient-mul: 1;
+  --ag-accent-prism-mul: 1;
+  --ag-prism-strength: calc(var(--ag-ambient-mul, 1) * var(--ag-accent-prism-mul, 1));
+  --ag-prism-light-mul: 1;
+
+  /* 0.5px 镜面高光与光学材质纹理 */
+  --ag-cs-hairline: 0.5px;
+  --ag-cs-specular: rgba(255, 255, 255, 0.095);
+  --ag-cs-specular-border: rgba(255, 255, 255, 0.14);
+  --ag-cs-sheen: linear-gradient(172deg, rgba(255, 255, 255, 0.046) 0%, rgba(160, 185, 245, 0.014) 36%, rgba(10, 11, 16, 0.2) 100%);
+
+  /* 侧边栏与行选中光学指示器 */
+  --ag-cs-sidebar-hover: rgba(255, 255, 255, 0.055);
+  --ag-cs-sidebar-row-hover: rgba(255, 255, 255, 0.042);
+  --ag-cs-sidebar-selected: rgba(255, 255, 255, 0.074);
+  --ag-cs-sidebar-sel-sh: inset 0 1px 0 var(--ag-cs-specular);
+  --ag-cs-sidebar-sel-bar: linear-gradient(#5CC6FC 0%, #3186FF 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(92, 198, 252, 0.42);
+
+  /* 发送 / 停止 / 运行态光学控件 */
+  --ag-cs-send-bg: #F2F3F7;
+  --ag-cs-send-fg: #0E0F14;
+  --ag-cs-send-spec: rgba(255, 255, 255, 0.68);
+  --ag-cs-send-sh: inset 0 1px 0 #FFFFFF, 0 2px 8px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --ag-cs-send-dis-bg: rgba(255, 255, 255, 0.07);
+  --ag-cs-send-dis-fg: rgba(242, 243, 247, 0.28);
+
+  --ag-cs-cancel-bg: #121319;
+  --ag-cs-cancel-core: radial-gradient(120% 120% at 50% 0%, #1C1E28 0%, #101117 100%);
+  --ag-cs-cancel-stop: #F4F5F8;
+  --ag-cs-cancel-stop-hv: #FFFFFF;
+  --ag-cs-cancel-stop-sh: 0 0 6px rgba(255, 255, 255, 0.32);
+  --ag-cs-cancel-ring: conic-gradient(#4285F4 0deg, #9B72CB 95deg, #EA4335 185deg, #FBBC04 275deg, #34A853 325deg, #4285F4 360deg);
+  --ag-cs-cancel-sh: 0 0 12px -2px rgba(66, 133, 244, 0.42), 0 2px 6px rgba(0, 0, 0, 0.4);
+
+  --ag-cs-run-core: #0F131D;
+  --ag-cs-run-star: #DCEEFF;
+  --ag-cs-run-star-sh: 0 0 5px rgba(92, 198, 252, 0.78);
+  --ag-cs-run-wash: linear-gradient(90deg, rgba(49, 134, 255, 0.11) 0%, rgba(92, 198, 252, 0.04) 55%, transparent 100%);
+  --ag-cs-run-bar: linear-gradient(#FBBC04 0%, #EA4335 16%, #9B72CB 34%, #5CC6FC 58%, #3186FF 100%);
+  --ag-cs-run-ring: conic-gradient(#1B49B2 0deg, #3186FF 150deg, #5CC6FC 232deg, #9B72CB 276deg, #EA4335 308deg, #FBBC04 334deg, #EAF4FF 350deg, #1B49B2 360deg);
+  --ag-cs-run-outer-sh: 0 0 7px rgba(49, 134, 255, 0.3);
+
+  /* 思维链、声纳脉冲、代码槽与数据可视化色板 */
+  --ag-cs-focus-spec: rgba(255, 255, 255, 0.14);
+  --ag-cs-whisper-hv: rgba(255, 255, 255, 0.032);
+  --ag-cs-thought-rule: rgba(92, 198, 252, 0.26);
+  --ag-cs-thought-fg: color-mix(in srgb, var(--secondary-foreground, #C4C4CE) 72%, transparent);
+  --ag-cs-comet-bg: #7CE2FF;
+  --ag-cs-comet-sh: 0 0 8px rgba(92, 198, 252, 0.85);
+  --ag-cs-stream-tint: color-mix(in srgb, #7CE2FF 38%, currentColor);
+  --ag-cs-code-scan-bg: rgba(92, 198, 252, 0.11);
+  --ag-cs-nav-dot: color-mix(in srgb, #8AB4F8 28%, var(--muted-foreground, #8A8A98));
+  --ag-cs-nav-active: #5CC6FC;
+  --ag-cs-nav-glow: 0 0 7px rgba(92, 198, 252, 0.55);
+  --ag-cs-sonar-border: rgba(92, 198, 252, 0.42);
+  --ag-cs-sonar-glow: rgba(92, 198, 252, 0.22);
+  --ag-cs-sonar-wash: rgba(92, 198, 252, 0.042);
+  --ag-cs-heat-hi-1: #58C4F6;
+  --ag-cs-heat-hi-2: #8CE0FF;
+  --ag-cs-code-well: color-mix(in srgb, var(--background, #0B0B0E) 74%, var(--card, #141418));
+  --ag-cs-console-well: color-mix(in srgb, var(--sidebar, #09090B) 78%, var(--background, #0B0B0E));
+  --ag-cs-surface-sh: inset 0 1px 0 var(--ag-cs-specular), 0 12px 32px -8px rgba(0, 0, 0, 0.36);
+  --ag-cs-bubble-sh: inset 0 1px 0 var(--ag-cs-specular);
+  --ag-cs-card-header-sh: inset 0 1px 0 var(--ag-cs-specular);
+  --ag-cs-col-max: max(30vw, var(--max-conversation-width, 50rem));
+
+  --ag-cs-data-0: #4F8BFF;
+  --ag-cs-data-1: #58C4F6;
+  --ag-cs-data-2: #4CC39A;
+  --ag-cs-data-3: #8E84F5;
+  --ag-cs-data-4: #7AA2D4;
+  --ag-cs-data-5: #E2B354;
+  --ag-cs-data-6: #3B9EE8;
+  --ag-cs-data-7: #6B93D6;
+  --ag-cs-data-8: #5BC4BE;
+  --ag-cs-data-9: #8C99B0;
+
+  /* 默认深空黑曜 (Obsidian) 核心表面色 */
+  color-scheme: dark;
+  --background: #0B0B0E;
+  --content: #0E0E11;
+  --shell: #0B0B0E;
+  --body-background: #0B0B0E;
+  --sidebar: #09090B;
+  --sidebar-muted: rgba(255, 255, 255, 0.045);
+  --sidebar-secondary: rgba(255, 255, 255, 0.072);
+  --card: #141418;
+  --card-border: rgba(255, 255, 255, 0.088);
+  --border: rgba(255, 255, 255, 0.072);
+  --secondary: #1C1C22;
+  --muted: #141418;
+  --foreground: #F2F2F5;
+  --secondary-foreground: #C4C4CE;
+  --muted-foreground: #8A8A98;
+  --placeholder: #626270;
+  --primary: #669DF6;
+  --primary-foreground: #FFFFFF;
+  --link: #8AB4F8;
+  --error: #E5534B;
+  --warning: #F2B84B;
+  --success: #50A37B;
+  --scrim: rgba(9, 9, 11, 0.74);
+
+  --ag-cs-composer-bg: rgba(20, 21, 26, 0.94);
+  --ag-cs-panel-bg: rgba(19, 20, 25, 0.96);
+  --ag-cs-popover-bg: rgba(23, 24, 30, 0.94);
+  --ag-cs-pill-bg: rgba(28, 29, 36, 0.78);
+  --ag-cs-bubble: rgba(255, 255, 255, 0.052);
+  --prism-message-user-bg: var(--ag-cs-bubble);
+  --prism-message-user-border: var(--border);
+  --prism-message-assistant-bg: color-mix(in srgb, var(--card) 78%, var(--ag-cs-bubble));
+  --prism-message-assistant-border: var(--border);
+  --ag-cs-ripple-ink: #92949C;
+  --ag-cs-ripple-wave: #D6DAE4;
+  --ag-cs-composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.44), 0 8px 20px -6px rgba(0, 0, 0, 0.48), 0 20px 44px -14px rgba(0, 0, 0, 0.62);
+
+  /* 派生语义变量 */
+  --ag-cs-canvas: var(--content);
+  --ag-cs-sidebar: var(--sidebar);
+  --ag-cs-tile-bg: color-mix(in srgb, var(--foreground) 3.4%, var(--card));
+  --ag-cs-tile-border: color-mix(in srgb, var(--foreground) 9.5%, transparent);
+  --ag-cs-pill-border: var(--card-border);
+  --ag-cs-tab-active: color-mix(in srgb, var(--foreground) 9%, transparent);
+  --ag-cs-border-1: var(--border);
+  --ag-cs-border-2: var(--card-border);
+  --ag-cs-hover-wash: var(--ag-cs-sidebar-hover);
+  --ag-cs-active-wash: color-mix(in srgb, var(--foreground) 9.5%, transparent);
+  --ag-cs-focus-ring: color-mix(in srgb, var(--primary) 38%, transparent);
+  --ag-cs-focus-halo: color-mix(in srgb, var(--primary) 14%, transparent);
+  --ag-cs-accent: var(--primary);
+  --ag-cs-data-ink: var(--primary);
+  --ag-cs-heat-empty: color-mix(in srgb, var(--foreground) 5.5%, transparent);
+  --ag-cs-tip-bg: var(--foreground);
+  --ag-cs-tip-fg: var(--background);
+  --ag-cs-scroll: color-mix(in srgb, var(--foreground) 16%, transparent);
+  --ag-cs-scroll-hover: color-mix(in srgb, var(--foreground) 30%, transparent);
+
+  /* Obsidian Prism 标准 --ag-prism-* 公开令牌 */
+  --ag-prism-bg: var(--background);
+  --ag-prism-surface: var(--content);
+  --ag-prism-sidebar: var(--sidebar);
+  --ag-prism-card: var(--card);
+  --ag-prism-fg: var(--foreground);
+  --ag-prism-fg-secondary: var(--secondary-foreground);
+  --ag-prism-fg-muted: var(--muted-foreground);
+  --ag-prism-border: var(--ag-cs-border-1);
+  --ag-prism-border-strong: var(--ag-cs-border-2);
+  --ag-prism-accent: var(--primary);
+  --ag-prism-specular: var(--ag-cs-specular);
+  --ag-prism-code-well: var(--ag-cs-code-well);
+  --ag-prism-console-well: var(--ag-cs-console-well);
+
+  /* DeepSeek Harness 静态与字体基础令牌 */
+  --dsw-static-bg: var(--background);
+  --dsw-static-surface: var(--content);
+  --dsw-static-sidebar: var(--sidebar);
+  --dsw-static-card: var(--card);
+  --dsw-static-border: var(--border);
+  --dsw-static-fg: var(--foreground);
+  --dsw-static-muted: var(--muted-foreground);
+  --dsw-static-accent: var(--primary);
+  --dsw-font-family: var(--font-sans);
+  --dsw-font-mono: var(--ag-cs-mono-stack);
+  --dsw-font-family-mono: var(--ag-cs-mono-stack);
+}
+
+/* --------------------------------------------------------------------------
+ * 二、四大主题预设矩阵 + 真实 DSH Desktop --dsw-alias-* 高优先级覆写
+ *     覆盖全部真实 DSH 语义令牌，确保在 React SPA 与 dsh-better-sidebar 中 1:1 生效
+ * -------------------------------------------------------------------------- */
+
+/* 1. 深空黑曜 (Obsidian) */
+:root[data-prism-theme="obsidian"],
+html[data-prism-theme="obsidian"],
+body[data-prism-theme="obsidian"],
+html[data-prism-theme="obsidian"] body,
+html[data-ag-cs-style][data-ag-cs-palette="obsidian"]:not([data-ag-cs-theme="light"]) {
+  color-scheme: dark !important;
+  --background: #0B0B0E;
+  --content: #0E0E11;
+  --shell: #0B0B0E;
+  --body-background: #0B0B0E;
+  --sidebar: #09090B;
+  --sidebar-muted: rgba(255, 255, 255, 0.045);
+  --sidebar-secondary: rgba(255, 255, 255, 0.072);
+  --card: #141418;
+  --card-border: rgba(255, 255, 255, 0.088);
+  --border: rgba(255, 255, 255, 0.072);
+  --secondary: #1C1C22;
+  --muted: #141418;
+  --foreground: #F2F2F5;
+  --secondary-foreground: #C4C4CE;
+  --muted-foreground: #8A8A98;
+  --placeholder: #626270;
+  --primary: #669DF6;
+  --primary-foreground: #FFFFFF;
+  --link: #8AB4F8;
+  --error: #E5534B;
+  --warning: #F2B84B;
+  --success: #50A37B;
+  --scrim: rgba(9, 9, 11, 0.74);
+  --ag-cs-composer-bg: rgba(20, 21, 26, 0.94);
+  --ag-cs-panel-bg: rgba(19, 20, 25, 0.96);
+  --ag-cs-popover-bg: rgba(23, 24, 30, 0.94);
+  --ag-cs-pill-bg: rgba(28, 29, 36, 0.78);
+  --ag-cs-bubble: rgba(255, 255, 255, 0.052);
+  --prism-message-user-bg: rgba(255, 255, 255, 0.075);
+  --prism-message-user-border: rgba(255, 255, 255, 0.12);
+  --prism-message-assistant-bg: rgba(29, 31, 39, 0.88);
+  --prism-message-assistant-border: rgba(255, 255, 255, 0.095);
+  --ag-cs-ripple-ink: #92949C;
+  --ag-cs-ripple-wave: #D6DAE4;
+  --ag-cs-code-well: #09090B;
+  --ag-cs-console-well: #08080A;
+  --ag-cs-composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.44), 0 8px 20px -6px rgba(0, 0, 0, 0.48), 0 20px 44px -14px rgba(0, 0, 0, 0.62);
+
+  /* 真实 DSH Desktop --dsw-alias-* 完整覆写 */
+  --dsw-alias-bg-base: #0E0E11 !important;
+  --dsw-alias-bg-layer-1: #09090B !important;
+  --dsw-alias-bg-layer-2: #141418 !important;
+  --dsw-alias-bg-layer-3: #1C1C22 !important;
+  --dsw-alias-bg-mask-1: rgba(9, 9, 11, 0.74) !important;
+  --dsw-alias-bg-canvas: #0E0E11 !important;
+  --dsw-alias-bg-sidebar: #09090B !important;
+  --dsw-alias-bg-elevated: #141418 !important;
+  --dsw-alias-bg-composer: rgba(20, 21, 26, 0.94) !important;
+  --dsw-alias-bg-code: #09090B !important;
+  --dsw-alias-bg-hover: rgba(255, 255, 255, 0.055) !important;
+  --dsw-alias-border-l1: rgba(255, 255, 255, 0.072) !important;
+  --dsw-alias-border-l2: rgba(255, 255, 255, 0.095) !important;
+  --dsw-alias-border-l4: rgba(255, 255, 255, 0.16) !important;
+  --dsw-alias-border-l2-darkmode-thin: rgba(255, 255, 255, 0.088) !important;
+  --dsw-alias-border-subtle: rgba(255, 255, 255, 0.072) !important;
+  --dsw-alias-border-strong: rgba(255, 255, 255, 0.12) !important;
+  --dsw-alias-hairline: rgba(255, 255, 255, 0.095) !important;
+  --dsw-alias-brand-primary: #669DF6 !important;
+  --dsw-alias-accent: #669DF6 !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(102, 157, 246, 0.15) !important;
+  --dsw-alias-accent-fg: #FFFFFF !important;
+  --dsw-alias-button-primary-fill: #669DF6 !important;
+  --dsw-alias-button-primary-hover: #7AAAFF !important;
+  --dsw-alias-button-ghost-active-fill: rgba(102, 157, 246, 0.14) !important;
+  --dsw-alias-button-ghost-active-border: rgba(102, 157, 246, 0.38) !important;
+  --dsw-alias-button-ghost-hover: rgba(255, 255, 255, 0.06) !important;
+  --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.055) !important;
+  --dsw-alias-interactive-bg-active: rgba(255, 255, 255, 0.095) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(102, 157, 246, 0.16) !important;
+  --dsw-alias-label-primary: #F2F2F5 !important;
+  --dsw-alias-label-secondary: #C4C4CE !important;
+  --dsw-alias-label-tertiary: #8A8A98 !important;
+  --dsw-alias-label-dimmed: #626270 !important;
+  --dsw-alias-text-primary: #F2F2F5 !important;
+  --dsw-alias-text-secondary: #C4C4CE !important;
+  --dsw-alias-text-muted: #8A8A98 !important;
+  --dsw-alias-scrollbar-bg-l2: rgba(242, 242, 245, 0.16) !important;
+  --dsw-alias-scrollbar-hover-l2: rgba(242, 242, 245, 0.3) !important;
+  --dsw-alias-state-error-primary: #E5534B !important;
+  --dsw-alias-state-success-primary: #50A37B !important;
+  --dsw-alias-state-warn-primary: #F2B84B !important;
+  --dsw-alias-state-business-primary: #669DF6 !important;
+  --dsw-alias-success: #50A37B !important;
+  --dsw-alias-warning: #F2B84B !important;
+  --dsw-alias-danger: #E5534B !important;
+  --dsw-font-family: var(--font-sans) !important;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+/* 2. 暖炭玄岩 (Warm / Claude Dark) */
+:root[data-prism-theme="warm"],
+html[data-prism-theme="warm"],
+body[data-prism-theme="warm"],
+html[data-prism-theme="warm"] body,
+html[data-ag-cs-style][data-ag-cs-palette="warm"]:not([data-ag-cs-theme="light"]),
+html[data-ag-cs-style][data-ag-cs-palette="claude"]:not([data-ag-cs-theme="light"]) {
+  color-scheme: dark !important;
+  --background: #141413;
+  --content: #141413;
+  --shell: #141413;
+  --body-background: #141413;
+  --sidebar: #10100F;
+  --sidebar-muted: rgba(245, 240, 230, 0.045);
+  --sidebar-secondary: rgba(245, 240, 230, 0.075);
+  --card: #1B1A18;
+  --card-border: rgba(245, 240, 230, 0.115);
+  --border: rgba(245, 240, 230, 0.082);
+  --secondary: #22201D;
+  --muted: #1B1A18;
+  --foreground: #F2EFE9;
+  --secondary-foreground: #CEC8BC;
+  --muted-foreground: #A39E93;
+  --placeholder: #6E6A61;
+  --primary: #D97757;
+  --primary-foreground: #FFFFFF;
+  --link: #E59377;
+  --error: #E5534B;
+  --warning: #E5A93B;
+  --success: #56A87E;
+  --scrim: rgba(0, 0, 0, 0.64);
+  --ag-cs-specular: rgba(255, 250, 242, 0.095);
+  --ag-cs-sheen: linear-gradient(172deg, rgba(255, 248, 236, 0.042) 0%, rgba(217, 119, 87, 0.014) 38%, rgba(16, 15, 13, 0.2) 100%);
+  --ag-cs-sidebar-sel-bar: linear-gradient(#F0A37E 0%, #D97757 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(217, 119, 87, 0.42);
+  --ag-cs-thought-rule: rgba(229, 147, 119, 0.36);
+  --ag-cs-comet-bg: #F0A37E;
+  --ag-cs-comet-sh: 0 0 8px rgba(217, 119, 87, 0.8);
+  --ag-cs-stream-tint: color-mix(in srgb, #F0A37E 38%, currentColor);
+  --ag-cs-code-scan-bg: rgba(217, 119, 87, 0.12);
+  --ag-cs-cancel-bg: #191715;
+  --ag-cs-cancel-core: radial-gradient(120% 120% at 50% 0%, #24211E 0%, #151412 100%);
+  --ag-cs-cancel-sh: 0 0 12px -2px rgba(217, 119, 87, 0.38), 0 2px 6px rgba(0, 0, 0, 0.42);
+  --ag-cs-run-core: #191715;
+  --ag-cs-run-star: #FCE8DC;
+  --ag-cs-run-star-sh: 0 0 5px rgba(240, 163, 126, 0.78);
+  --ag-cs-run-wash: linear-gradient(90deg, rgba(217, 119, 87, 0.12) 0%, rgba(240, 163, 126, 0.04) 55%, transparent 100%);
+  --ag-cs-run-bar: linear-gradient(#F6BD60 0%, #E59377 45%, #D97757 100%);
+  --ag-cs-run-ring: conic-gradient(#8C3F27 0deg, #D97757 150deg, #F0A37E 240deg, #F6BD60 315deg, #FFF3EA 348deg, #8C3F27 360deg);
+  --ag-cs-run-outer-sh: 0 0 7px rgba(217, 119, 87, 0.3);
+  --ag-cs-nav-dot: color-mix(in srgb, #E59377 32%, var(--muted-foreground));
+  --ag-cs-nav-active: #E59377;
+  --ag-cs-nav-glow: 0 0 7px rgba(217, 119, 87, 0.52);
+  --ag-cs-sonar-border: rgba(229, 147, 119, 0.45);
+  --ag-cs-sonar-glow: rgba(217, 119, 87, 0.24);
+  --ag-cs-sonar-wash: rgba(217, 119, 87, 0.05);
+  --ag-cs-heat-hi-1: #EE9B7A;
+  --ag-cs-heat-hi-2: #F6C2A8;
+  --ag-cs-code-well: #0F0E0D;
+  --ag-cs-console-well: #0C0B0A;
+  --ag-cs-composer-bg: rgba(28, 27, 25, 0.95);
+  --ag-cs-panel-bg: rgba(26, 25, 23, 0.96);
+  --ag-cs-popover-bg: rgba(25, 24, 22, 0.94);
+  --ag-cs-pill-bg: rgba(35, 33, 30, 0.8);
+  --ag-cs-bubble: rgba(245, 240, 230, 0.055);
+  --prism-message-user-bg: rgba(245, 240, 230, 0.075);
+  --prism-message-user-border: rgba(245, 240, 230, 0.125);
+  --prism-message-assistant-bg: rgba(39, 36, 32, 0.88);
+  --prism-message-assistant-border: rgba(245, 240, 230, 0.105);
+  --ag-cs-ripple-ink: #B4AEA2;
+  --ag-cs-ripple-wave: #D97757;
+  --ag-cs-composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.44), 0 10px 28px -6px rgba(0, 0, 0, 0.5);
+
+  /* 真实 DSH Desktop --dsw-alias-* 完整覆写 */
+  --dsw-alias-bg-base: #141413 !important;
+  --dsw-alias-bg-layer-1: #10100F !important;
+  --dsw-alias-bg-layer-2: #1B1A18 !important;
+  --dsw-alias-bg-layer-3: #22201D !important;
+  --dsw-alias-bg-mask-1: rgba(16, 15, 13, 0.68) !important;
+  --dsw-alias-bg-canvas: #141413 !important;
+  --dsw-alias-bg-sidebar: #10100F !important;
+  --dsw-alias-bg-elevated: #1B1A18 !important;
+  --dsw-alias-bg-composer: rgba(28, 27, 25, 0.95) !important;
+  --dsw-alias-bg-code: #0F0E0D !important;
+  --dsw-alias-bg-hover: rgba(245, 240, 230, 0.055) !important;
+  --dsw-alias-border-l1: rgba(245, 240, 230, 0.082) !important;
+  --dsw-alias-border-l2: rgba(245, 240, 230, 0.115) !important;
+  --dsw-alias-border-l4: rgba(245, 240, 230, 0.18) !important;
+  --dsw-alias-border-l2-darkmode-thin: rgba(245, 240, 230, 0.095) !important;
+  --dsw-alias-border-subtle: rgba(245, 240, 230, 0.082) !important;
+  --dsw-alias-border-strong: rgba(245, 240, 230, 0.14) !important;
+  --dsw-alias-hairline: rgba(245, 240, 230, 0.095) !important;
+  --dsw-alias-brand-primary: #D97757 !important;
+  --dsw-alias-accent: #D97757 !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(217, 119, 87, 0.15) !important;
+  --dsw-alias-accent-fg: #FFFFFF !important;
+  --dsw-alias-button-primary-fill: #D97757 !important;
+  --dsw-alias-button-primary-hover: #E59377 !important;
+  --dsw-alias-button-ghost-active-fill: rgba(217, 119, 87, 0.15) !important;
+  --dsw-alias-button-ghost-active-border: rgba(217, 119, 87, 0.38) !important;
+  --dsw-alias-button-ghost-hover: rgba(245, 240, 230, 0.06) !important;
+  --dsw-alias-interactive-bg-hover: rgba(245, 240, 230, 0.055) !important;
+  --dsw-alias-interactive-bg-active: rgba(245, 240, 230, 0.095) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(217, 119, 87, 0.16) !important;
+  --dsw-alias-label-primary: #F2EFE9 !important;
+  --dsw-alias-label-secondary: #CEC8BC !important;
+  --dsw-alias-label-tertiary: #A39E93 !important;
+  --dsw-alias-label-dimmed: #6E6A61 !important;
+  --dsw-alias-text-primary: #F2EFE9 !important;
+  --dsw-alias-text-secondary: #CEC8BC !important;
+  --dsw-alias-text-muted: #A39E93 !important;
+  --dsw-alias-scrollbar-bg-l2: rgba(242, 239, 233, 0.16) !important;
+  --dsw-alias-scrollbar-hover-l2: rgba(242, 239, 233, 0.3) !important;
+  --dsw-alias-state-error-primary: #E5534B !important;
+  --dsw-alias-state-success-primary: #56A87E !important;
+  --dsw-alias-state-warn-primary: #E5A93B !important;
+  --dsw-alias-state-business-primary: #D97757 !important;
+  --dsw-alias-success: #56A87E !important;
+  --dsw-alias-warning: #E5A93B !important;
+  --dsw-alias-danger: #E5534B !important;
+  --dsw-font-family: var(--font-sans) !important;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+/* 浅色模式共享光学层 (crystal & alabaster) */
+:root[data-prism-theme="crystal"],
+:root[data-prism-theme="alabaster"],
+html[data-prism-theme="crystal"],
+html[data-prism-theme="alabaster"],
+html[data-ag-cs-style][data-ag-cs-theme="light"] {
+  --ag-prism-light-mul: 1;
+  --ag-cs-specular: rgba(255, 255, 255, 0.94);
+  --ag-cs-specular-border: rgba(255, 255, 255, 0.88);
+  --ag-cs-focus-spec: rgba(37, 99, 235, 0.14);
+  --ag-cs-whisper-hv: rgba(15, 23, 42, 0.048);
+  --ag-cs-thought-rule: rgba(37, 99, 235, 0.45);
+  --ag-cs-thought-fg: color-mix(in srgb, var(--foreground) 76%, transparent);
+  --ag-cs-comet-bg: #2563EB;
+  --ag-cs-comet-sh: 0 0 8px rgba(37, 99, 235, 0.65);
+  --ag-cs-stream-tint: color-mix(in srgb, #2563EB 38%, currentColor);
+  --ag-cs-code-scan-bg: rgba(37, 99, 235, 0.1);
+  --ag-cs-sheen: linear-gradient(176deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 246, 255, 0.55) 100%);
+  --ag-cs-sidebar-hover: rgba(15, 23, 42, 0.058);
+  --ag-cs-sidebar-row-hover: rgba(15, 23, 42, 0.046);
+  --ag-cs-sidebar-selected: #FFFFFF;
+  --ag-cs-sidebar-sel-sh: 0 1px 3px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.065);
+  --ag-cs-sidebar-sel-bar: linear-gradient(#2563EB 0%, #4F46E5 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(37, 99, 235, 0.36);
+  --ag-cs-send-bg: #0F172A;
+  --ag-cs-send-fg: #F8FAFC;
+  --ag-cs-send-spec: rgba(255, 255, 255, 0.18);
+  --ag-cs-send-sh: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 8px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(15, 23, 42, 0.12);
+  --ag-cs-send-dis-bg: rgba(15, 23, 42, 0.065);
+  --ag-cs-send-dis-fg: rgba(15, 23, 42, 0.3);
+  --ag-cs-cancel-bg: #FFFFFF;
+  --ag-cs-cancel-core: radial-gradient(120% 120% at 50% 0%, #FFFFFF 0%, #EEF3FA 100%);
+  --ag-cs-cancel-stop: #0F172A;
+  --ag-cs-cancel-stop-hv: #1E293B;
+  --ag-cs-cancel-stop-sh: 0 1px 2px rgba(15, 23, 42, 0.24);
+  --ag-cs-cancel-sh: 0 0 12px -2px rgba(37, 99, 235, 0.34), 0 2px 6px rgba(15, 23, 42, 0.18);
+  --ag-cs-run-core: #FFFFFF;
+  --ag-cs-run-star: #2563EB;
+  --ag-cs-run-star-sh: 0 0 6px rgba(37, 99, 235, 0.65);
+  --ag-cs-run-wash: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.045) 55%, transparent 100%);
+  --ag-cs-run-bar: linear-gradient(#D97706 0%, #EA4335 28%, #7C3AED 62%, #2563EB 100%);
+  --ag-cs-run-ring: conic-gradient(#2563EB 0deg, #7C3AED 108deg, #EA4335 212deg, #D97706 304deg, #2563EB 360deg);
+  --ag-cs-run-outer-sh: 0 1px 3px rgba(15, 23, 42, 0.1), 0 0 8px rgba(37, 99, 235, 0.24);
+  --ag-cs-nav-dot: color-mix(in srgb, #2563EB 38%, var(--muted-foreground));
+  --ag-cs-nav-active: #2563EB;
+  --ag-cs-nav-glow: 0 0 0 2px rgba(37, 99, 235, 0.2), 0 0 8px rgba(37, 99, 235, 0.48);
+  --ag-cs-sonar-border: rgba(37, 99, 235, 0.48);
+  --ag-cs-sonar-glow: rgba(37, 99, 235, 0.18);
+  --ag-cs-sonar-wash: rgba(37, 99, 235, 0.065);
+  --ag-cs-heat-hi-1: #38BDF8;
+  --ag-cs-heat-hi-2: #60A5FA;
+  --ag-cs-surface-sh: 0 1px 3px rgba(15, 23, 42, 0.06), 0 10px 28px -6px rgba(30, 58, 138, 0.1), 0 0 0 1px rgba(15, 23, 42, 0.06);
+  --ag-cs-bubble-sh: 0 1px 2px rgba(15, 23, 42, 0.045), inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  --ag-cs-card-header-sh: 0 1px 3px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  --ag-cs-data-0: #2563EB;
+  --ag-cs-data-1: #0284C7;
+  --ag-cs-data-2: #059669;
+  --ag-cs-data-3: #7C3AED;
+  --ag-cs-data-4: #3B66A8;
+  --ag-cs-data-5: #D97706;
+  --ag-cs-data-6: #1D4ED8;
+  --ag-cs-data-7: #4361EE;
+  --ag-cs-data-8: #0D9488;
+  --ag-cs-data-9: #475569;
+}
+
+/* 3. 白昼冷晶 (Crystal Light) */
+:root[data-prism-theme="crystal"],
+html[data-prism-theme="crystal"],
+body[data-prism-theme="crystal"],
+html[data-prism-theme="crystal"] body,
+html[data-ag-cs-style][data-ag-cs-palette="obsidian"][data-ag-cs-theme="light"]:not([data-ag-cs-light-preset="alabaster"]) {
+  color-scheme: light !important;
+  --background: #F4F7FB;
+  --content: #F4F7FB;
+  --shell: #F4F7FB;
+  --body-background: #F4F7FB;
+  --sidebar: #E8EEF6;
+  --sidebar-muted: rgba(15, 23, 42, 0.052);
+  --sidebar-secondary: rgba(15, 23, 42, 0.085);
+  --card: #FFFFFF;
+  --card-border: rgba(15, 23, 42, 0.16);
+  --border: rgba(15, 23, 42, 0.115);
+  --secondary: #E9EFF8;
+  --muted: #ECF1F9;
+  --foreground: #0F172A;
+  --secondary-foreground: #334155;
+  --muted-foreground: #5B6B82;
+  --placeholder: #7C8CA5;
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
+  --link: #1D4ED8;
+  --error: #DC2626;
+  --warning: #D97706;
+  --success: #059669;
+  --scrim: rgba(15, 23, 42, 0.36);
+  --ag-cs-composer-bg: rgba(255, 255, 255, 0.94);
+  --ag-cs-panel-bg: rgba(255, 255, 255, 0.975);
+  --ag-cs-popover-bg: rgba(255, 255, 255, 0.96);
+  --ag-cs-pill-bg: #EEF3FA;
+  --ag-cs-bubble: #EAF1FB;
+  --prism-message-user-bg: #E6EFFC;
+  --prism-message-user-border: rgba(37, 99, 235, 0.16);
+  --prism-message-assistant-bg: #FBFDFF;
+  --prism-message-assistant-border: rgba(15, 23, 42, 0.12);
+  --ag-cs-code-well: #EDF2F9;
+  --ag-cs-console-well: #E4ECF7;
+  --ag-cs-ripple-ink: #556682;
+  --ag-cs-ripple-wave: #2563EB;
+  --ag-cs-composer-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 10px 28px -6px rgba(30, 58, 138, 0.1), 0 0 0 1px rgba(15, 23, 42, 0.08);
+
+  /* 真实 DSH Desktop --dsw-alias-* 完整覆写 */
+  --dsw-alias-bg-base: #F4F7FB !important;
+  --dsw-alias-bg-layer-1: #E8EEF6 !important;
+  --dsw-alias-bg-layer-2: #FFFFFF !important;
+  --dsw-alias-bg-layer-3: #E9EFF8 !important;
+  --dsw-alias-bg-mask-1: rgba(15, 23, 42, 0.36) !important;
+  --dsw-alias-bg-canvas: #F4F7FB !important;
+  --dsw-alias-bg-sidebar: #E8EEF6 !important;
+  --dsw-alias-bg-elevated: #FFFFFF !important;
+  --dsw-alias-bg-composer: rgba(255, 255, 255, 0.94) !important;
+  --dsw-alias-bg-code: #EDF2F9 !important;
+  --dsw-alias-bg-hover: rgba(15, 23, 42, 0.058) !important;
+  --dsw-alias-border-l1: rgba(15, 23, 42, 0.115) !important;
+  --dsw-alias-border-l2: rgba(15, 23, 42, 0.16) !important;
+  --dsw-alias-border-l4: rgba(15, 23, 42, 0.24) !important;
+  --dsw-alias-border-l2-darkmode-thin: rgba(15, 23, 42, 0.13) !important;
+  --dsw-alias-border-subtle: rgba(15, 23, 42, 0.115) !important;
+  --dsw-alias-border-strong: rgba(15, 23, 42, 0.18) !important;
+  --dsw-alias-hairline: rgba(15, 23, 42, 0.115) !important;
+  --dsw-alias-brand-primary: #2563EB !important;
+  --dsw-alias-accent: #2563EB !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(37, 99, 235, 0.11) !important;
+  --dsw-alias-accent-fg: #FFFFFF !important;
+  --dsw-alias-button-primary-fill: #2563EB !important;
+  --dsw-alias-button-primary-hover: #1D4ED8 !important;
+  --dsw-alias-button-ghost-active-fill: rgba(37, 99, 235, 0.11) !important;
+  --dsw-alias-button-ghost-active-border: rgba(37, 99, 235, 0.36) !important;
+  --dsw-alias-button-ghost-hover: rgba(15, 23, 42, 0.055) !important;
+  --dsw-alias-interactive-bg-hover: rgba(15, 23, 42, 0.058) !important;
+  --dsw-alias-interactive-bg-active: rgba(15, 23, 42, 0.095) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(37, 99, 235, 0.13) !important;
+  --dsw-alias-label-primary: #0F172A !important;
+  --dsw-alias-label-secondary: #334155 !important;
+  --dsw-alias-label-tertiary: #5B6B82 !important;
+  --dsw-alias-label-dimmed: #7C8CA5 !important;
+  --dsw-alias-text-primary: #0F172A !important;
+  --dsw-alias-text-secondary: #334155 !important;
+  --dsw-alias-text-muted: #5B6B82 !important;
+  --dsw-alias-scrollbar-bg-l2: rgba(15, 23, 42, 0.18) !important;
+  --dsw-alias-scrollbar-hover-l2: rgba(15, 23, 42, 0.34) !important;
+  --dsw-alias-state-error-primary: #DC2626 !important;
+  --dsw-alias-state-success-primary: #059669 !important;
+  --dsw-alias-state-warn-primary: #D97706 !important;
+  --dsw-alias-state-business-primary: #2563EB !important;
+  --dsw-alias-success: #059669 !important;
+  --dsw-alias-warning: #D97706 !important;
+  --dsw-alias-danger: #DC2626 !important;
+  --dsw-font-family: var(--font-sans) !important;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+/* 4. 暖白画册 (Alabaster Light) */
+:root[data-prism-theme="alabaster"],
+html[data-prism-theme="alabaster"],
+body[data-prism-theme="alabaster"],
+html[data-prism-theme="alabaster"] body,
+html[data-ag-cs-style][data-ag-cs-theme="light"][data-ag-cs-light-preset="alabaster"],
+html[data-ag-cs-style][data-ag-cs-theme="light"][data-ag-cs-palette="warm"],
+html[data-ag-cs-style][data-ag-cs-theme="light"][data-ag-cs-palette="claude"] {
+  color-scheme: light !important;
+  --background: #F6F4EE;
+  --content: #F6F4EE;
+  --shell: #F6F4EE;
+  --body-background: #F6F4EE;
+  --sidebar: #EBE6DC;
+  --sidebar-muted: rgba(42, 32, 20, 0.055);
+  --sidebar-secondary: rgba(42, 32, 20, 0.088);
+  --card: #FFFFFF;
+  --card-border: rgba(42, 32, 20, 0.165);
+  --border: rgba(42, 32, 20, 0.12);
+  --secondary: #EFECE3;
+  --muted: #F1EEE6;
+  --foreground: #1C1814;
+  --secondary-foreground: #3F3830;
+  --muted-foreground: #6B6257;
+  --placeholder: #8E8477;
+  --primary: #C25934;
+  --primary-foreground: #FFFFFF;
+  --link: #B54D28;
+  --error: #DC2626;
+  --warning: #D97706;
+  --success: #15803D;
+  --scrim: rgba(32, 24, 16, 0.34);
+  --ag-cs-sheen: linear-gradient(176deg, rgba(255, 255, 255, 0.97) 0%, rgba(250, 246, 238, 0.58) 100%);
+  --ag-cs-focus-spec: rgba(194, 89, 52, 0.14);
+  --ag-cs-sidebar-hover: rgba(42, 32, 20, 0.058);
+  --ag-cs-sidebar-row-hover: rgba(42, 32, 20, 0.046);
+  --ag-cs-sidebar-selected: #FFFFFF;
+  --ag-cs-sidebar-sel-sh: 0 1px 3px rgba(42, 32, 20, 0.06), 0 0 0 1px rgba(42, 32, 20, 0.068);
+  --ag-cs-sidebar-sel-bar: linear-gradient(#D97757 0%, #B54D28 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(194, 89, 52, 0.32);
+  --ag-cs-thought-rule: rgba(194, 89, 52, 0.42);
+  --ag-cs-comet-bg: #C25934;
+  --ag-cs-comet-sh: 0 0 8px rgba(194, 89, 52, 0.58);
+  --ag-cs-stream-tint: color-mix(in srgb, #C25934 36%, currentColor);
+  --ag-cs-code-scan-bg: rgba(194, 89, 52, 0.1);
+  --ag-cs-send-bg: #1C1814;
+  --ag-cs-send-fg: #FAF8F5;
+  --ag-cs-cancel-bg: #FFFFFF;
+  --ag-cs-cancel-core: radial-gradient(120% 120% at 50% 0%, #FFFFFF 0%, #F4EFE6 100%);
+  --ag-cs-cancel-stop: #1C1814;
+  --ag-cs-cancel-stop-hv: #2F2821;
+  --ag-cs-cancel-sh: 0 0 12px -2px rgba(194, 89, 52, 0.32), 0 2px 6px rgba(42, 32, 20, 0.16);
+  --ag-cs-run-core: #FFFFFF;
+  --ag-cs-run-star: #C25934;
+  --ag-cs-run-star-sh: 0 0 6px rgba(194, 89, 52, 0.58);
+  --ag-cs-run-wash: linear-gradient(90deg, rgba(194, 89, 52, 0.1) 0%, rgba(217, 119, 6, 0.045) 55%, transparent 100%);
+  --ag-cs-run-bar: linear-gradient(#D97706 0%, #C25934 55%, #9A3412 100%);
+  --ag-cs-run-ring: conic-gradient(#C25934 0deg, #EA580C 120deg, #D97706 245deg, #9A3412 325deg, #C25934 360deg);
+  --ag-cs-run-outer-sh: 0 1px 3px rgba(42, 32, 20, 0.1), 0 0 8px rgba(194, 89, 52, 0.22);
+  --ag-cs-nav-dot: color-mix(in srgb, #C25934 38%, var(--muted-foreground));
+  --ag-cs-nav-active: #C25934;
+  --ag-cs-nav-glow: 0 0 0 2px rgba(194, 89, 52, 0.2), 0 0 8px rgba(194, 89, 52, 0.42);
+  --ag-cs-sonar-border: rgba(194, 89, 52, 0.46);
+  --ag-cs-sonar-glow: rgba(194, 89, 52, 0.18);
+  --ag-cs-sonar-wash: rgba(194, 89, 52, 0.06);
+  --ag-cs-heat-hi-1: #E07A56;
+  --ag-cs-heat-hi-2: #EA9A78;
+  --ag-cs-code-well: #F0ECE3;
+  --ag-cs-console-well: #E5DFD2;
+  --ag-cs-composer-bg: rgba(255, 255, 255, 0.94);
+  --ag-cs-panel-bg: rgba(255, 255, 255, 0.975);
+  --ag-cs-popover-bg: rgba(255, 255, 255, 0.96);
+  --ag-cs-pill-bg: #F2EFE7;
+  --ag-cs-bubble: #EFECE2;
+  --prism-message-user-bg: #EFE8DC;
+  --prism-message-user-border: rgba(74, 55, 34, 0.16);
+  --prism-message-assistant-bg: #FBF7EF;
+  --prism-message-assistant-border: rgba(74, 55, 34, 0.12);
+  --ag-cs-ripple-ink: #665C4E;
+  --ag-cs-ripple-wave: #C25934;
+  --ag-cs-composer-shadow: 0 1px 3px rgba(42, 32, 20, 0.06), 0 10px 26px -6px rgba(68, 52, 32, 0.1), 0 0 0 1px rgba(42, 32, 20, 0.075);
+  --ag-cs-surface-sh: 0 1px 3px rgba(42, 32, 20, 0.06), 0 10px 26px -6px rgba(68, 52, 32, 0.1), 0 0 0 1px rgba(42, 32, 20, 0.065);
+  --ag-cs-bubble-sh: 0 1px 2px rgba(42, 32, 20, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  --ag-cs-card-header-sh: 0 1px 3px rgba(42, 32, 20, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+
+  /* 真实 DSH Desktop --dsw-alias-* 完整覆写 */
+  --dsw-alias-bg-base: #F6F4EE !important;
+  --dsw-alias-bg-layer-1: #EBE6DC !important;
+  --dsw-alias-bg-layer-2: #FFFFFF !important;
+  --dsw-alias-bg-layer-3: #EFECE3 !important;
+  --dsw-alias-bg-mask-1: rgba(32, 24, 16, 0.34) !important;
+  --dsw-alias-bg-canvas: #F6F4EE !important;
+  --dsw-alias-bg-sidebar: #EBE6DC !important;
+  --dsw-alias-bg-elevated: #FFFFFF !important;
+  --dsw-alias-bg-composer: rgba(255, 255, 255, 0.94) !important;
+  --dsw-alias-bg-code: #F0ECE3 !important;
+  --dsw-alias-bg-hover: rgba(42, 32, 20, 0.058) !important;
+  --dsw-alias-border-l1: rgba(42, 32, 20, 0.12) !important;
+  --dsw-alias-border-l2: rgba(42, 32, 20, 0.165) !important;
+  --dsw-alias-border-l4: rgba(42, 32, 20, 0.24) !important;
+  --dsw-alias-border-l2-darkmode-thin: rgba(42, 32, 20, 0.135) !important;
+  --dsw-alias-border-subtle: rgba(42, 32, 20, 0.12) !important;
+  --dsw-alias-border-strong: rgba(42, 32, 20, 0.185) !important;
+  --dsw-alias-hairline: rgba(42, 32, 20, 0.12) !important;
+  --dsw-alias-brand-primary: #C25934 !important;
+  --dsw-alias-accent: #C25934 !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(194, 89, 52, 0.12) !important;
+  --dsw-alias-accent-fg: #FFFFFF !important;
+  --dsw-alias-button-primary-fill: #C25934 !important;
+  --dsw-alias-button-primary-hover: #B54D28 !important;
+  --dsw-alias-button-ghost-active-fill: rgba(194, 89, 52, 0.12) !important;
+  --dsw-alias-button-ghost-active-border: rgba(194, 89, 52, 0.36) !important;
+  --dsw-alias-button-ghost-hover: rgba(42, 32, 20, 0.055) !important;
+  --dsw-alias-interactive-bg-hover: rgba(42, 32, 20, 0.058) !important;
+  --dsw-alias-interactive-bg-active: rgba(42, 32, 20, 0.095) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(194, 89, 52, 0.13) !important;
+  --dsw-alias-label-primary: #1C1814 !important;
+  --dsw-alias-label-secondary: #3F3830 !important;
+  --dsw-alias-label-tertiary: #6B6257 !important;
+  --dsw-alias-label-dimmed: #8E8477 !important;
+  --dsw-alias-text-primary: #1C1814 !important;
+  --dsw-alias-text-secondary: #3F3830 !important;
+  --dsw-alias-text-muted: #6B6257 !important;
+  --dsw-alias-scrollbar-bg-l2: rgba(42, 32, 20, 0.18) !important;
+  --dsw-alias-scrollbar-hover-l2: rgba(42, 32, 20, 0.34) !important;
+  --dsw-alias-state-error-primary: #DC2626 !important;
+  --dsw-alias-state-success-primary: #15803D !important;
+  --dsw-alias-state-warn-primary: #D97706 !important;
+  --dsw-alias-state-business-primary: #C25934 !important;
+  --dsw-alias-success: #15803D !important;
+  --dsw-alias-warning: #D97706 !important;
+  --dsw-alias-danger: #DC2626 !important;
+  --dsw-font-family: var(--font-sans) !important;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+/* --------------------------------------------------------------------------
+ * 三、五大工业强调色预设 (follow / cobalt / iris / amber / mono)
+ *     同步驱动 --primary 与真实 DSH --dsw-alias-brand-primary/accent/button-*
+ * -------------------------------------------------------------------------- */
+:root[data-prism-accent]:not([data-prism-accent="follow"]),
+html[data-ag-cs-accent]:not([data-ag-cs-accent="follow"]) {
+  --ag-cs-data-ink: var(--ag-cs-accent);
+  --ag-cs-ripple-wave: var(--ag-cs-accent);
+  --ag-cs-thought-rule: color-mix(in srgb, var(--ag-cs-accent) 36%, transparent);
+  --ag-cs-stream-tint: color-mix(in srgb, var(--ag-cs-comet-bg) 38%, currentColor);
+  --ag-cs-code-scan-bg: color-mix(in srgb, var(--ag-cs-accent) 11%, transparent);
+  --ag-cs-nav-dot: color-mix(in srgb, var(--ag-cs-accent) 34%, var(--muted-foreground));
+  --ag-cs-sonar-border: color-mix(in srgb, var(--ag-cs-accent) 46%, transparent);
+  --ag-cs-sonar-glow: color-mix(in srgb, var(--ag-cs-accent) 22%, transparent);
+  --ag-cs-sonar-wash: color-mix(in srgb, var(--ag-cs-accent) 5%, transparent);
+}
+
+/* 钴蓝 (cobalt) */
+:root[data-prism-accent="cobalt"],
+html[data-ag-cs-accent="cobalt"] {
+  --primary: #669DF6;
+  --link: #8AB4F8;
+  --ag-prism-cobalt: #3B82F6;
+  --ag-prism-iris: #60A5FA;
+  --ag-prism-coral: #38BDF8;
+  --ag-prism-amber: #93C5FD;
+  --ag-cs-accent: #669DF6;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#5CC6FC 0%, #3186FF 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(92, 198, 252, 0.42);
+  --ag-cs-comet-bg: #7CE2FF;
+  --ag-cs-comet-sh: 0 0 8px rgba(92, 198, 252, 0.82);
+  --ag-cs-nav-active: #5CC6FC;
+  --ag-cs-nav-glow: 0 0 7px rgba(92, 198, 252, 0.55);
+  --ag-cs-heat-hi-1: #58C4F6;
+  --ag-cs-heat-hi-2: #8CE0FF;
+  --dsw-alias-brand-primary: #669DF6 !important;
+  --dsw-alias-accent: #669DF6 !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(102, 157, 246, 0.16) !important;
+  --dsw-alias-button-primary-fill: #669DF6 !important;
+  --dsw-alias-button-primary-hover: #7AAAFF !important;
+  --dsw-alias-button-ghost-active-fill: rgba(102, 157, 246, 0.16) !important;
+  --dsw-alias-button-ghost-active-border: rgba(102, 157, 246, 0.42) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(102, 157, 246, 0.18) !important;
+  --dsw-alias-state-business-primary: #669DF6 !important;
+}
+
+/* 鸢尾紫 (iris) */
+:root[data-prism-accent="iris"],
+html[data-ag-cs-accent="iris"] {
+  --primary: #A58AF8;
+  --link: #BBA6FF;
+  --ag-prism-cobalt: #8B5CF6;
+  --ag-prism-iris: #A78BFA;
+  --ag-prism-coral: #C084FC;
+  --ag-prism-amber: #DDD6FE;
+  --ag-cs-accent: #A58AF8;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#C4B5FD 0%, #8B5CF6 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(165, 138, 248, 0.44);
+  --ag-cs-comet-bg: #C4B5FD;
+  --ag-cs-comet-sh: 0 0 8px rgba(165, 138, 248, 0.8);
+  --ag-cs-nav-active: #B79DFB;
+  --ag-cs-nav-glow: 0 0 7px rgba(165, 138, 248, 0.55);
+  --ag-cs-heat-hi-1: #B79DFB;
+  --ag-cs-heat-hi-2: #DDD6FE;
+  --dsw-alias-brand-primary: #A58AF8 !important;
+  --dsw-alias-accent: #A58AF8 !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(165, 138, 248, 0.16) !important;
+  --dsw-alias-button-primary-fill: #A58AF8 !important;
+  --dsw-alias-button-primary-hover: #BBA6FF !important;
+  --dsw-alias-button-ghost-active-fill: rgba(165, 138, 248, 0.16) !important;
+  --dsw-alias-button-ghost-active-border: rgba(165, 138, 248, 0.42) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(165, 138, 248, 0.18) !important;
+  --dsw-alias-state-business-primary: #A58AF8 !important;
+}
+
+/* 琥珀金 (amber) */
+:root[data-prism-accent="amber"],
+html[data-ag-cs-accent="amber"] {
+  --primary: #F2B84B;
+  --primary-foreground: #14120E;
+  --link: #F6CB75;
+  --ag-prism-cobalt: #F59E0B;
+  --ag-prism-iris: #FBBF24;
+  --ag-prism-coral: #EA580C;
+  --ag-prism-amber: #FDE68A;
+  --ag-cs-accent: #F2B84B;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#FDE68A 0%, #F59E0B 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 6px rgba(242, 184, 75, 0.42);
+  --ag-cs-comet-bg: #FCD34D;
+  --ag-cs-comet-sh: 0 0 8px rgba(242, 184, 75, 0.78);
+  --ag-cs-nav-active: #FBBF24;
+  --ag-cs-nav-glow: 0 0 7px rgba(242, 184, 75, 0.52);
+  --ag-cs-heat-hi-1: #FBBF24;
+  --ag-cs-heat-hi-2: #FDE68A;
+  --dsw-alias-brand-primary: #F2B84B !important;
+  --dsw-alias-accent: #F2B84B !important;
+  --dsw-alias-accent-ink: #14120E !important;
+  --dsw-alias-accent-soft: rgba(242, 184, 75, 0.16) !important;
+  --dsw-alias-button-primary-fill: #F2B84B !important;
+  --dsw-alias-button-primary-hover: #F6CB75 !important;
+  --dsw-alias-button-ghost-active-fill: rgba(242, 184, 75, 0.15) !important;
+  --dsw-alias-button-ghost-active-border: rgba(242, 184, 75, 0.4) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(242, 184, 75, 0.18) !important;
+  --dsw-alias-state-business-primary: #F2B84B !important;
+}
+
+/* 纯银钛单色 (mono) */
+:root[data-prism-accent="mono"],
+html[data-ag-cs-accent="mono"] {
+  --primary: #D4D7E0;
+  --primary-foreground: #0E0F14;
+  --link: #E2E5EE;
+  --ag-accent-prism-mul: 0.32;
+  --ag-prism-cobalt: #E2E8F0;
+  --ag-prism-iris: #94A3B8;
+  --ag-prism-coral: #CBD5E1;
+  --ag-prism-amber: #F8FAFC;
+  --ag-cs-accent: #D4D7E0;
+  --ag-cs-data-ink: #B8BECB;
+  --ag-cs-ripple-wave: #CBD5E1;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#F2F4F8 0%, #9BA3B4 100%);
+  --ag-cs-sidebar-sel-glow: 0 0 5px rgba(212, 215, 224, 0.28);
+  --ag-cs-comet-bg: #E5E7EB;
+  --ag-cs-comet-sh: 0 0 6px rgba(229, 231, 235, 0.55);
+  --ag-cs-cancel-ring: conic-gradient(#525866 0deg, #9BA3B4 120deg, #F2F4F8 220deg, #7A8294 310deg, #525866 360deg);
+  --ag-cs-cancel-sh: 0 0 10px -2px rgba(212, 215, 224, 0.28), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --ag-cs-run-star: #F2F4F8;
+  --ag-cs-run-bar: linear-gradient(#F2F4F8 0%, #8E96A8 100%);
+  --ag-cs-run-ring: conic-gradient(#4A505E 0deg, #9BA3B4 160deg, #F2F4F8 260deg, #6E7687 330deg, #4A505E 360deg);
+  --ag-cs-nav-active: #E2E5EE;
+  --ag-cs-nav-glow: 0 0 6px rgba(226, 229, 238, 0.45);
+  --ag-cs-heat-hi-1: #CBD5E1;
+  --ag-cs-heat-hi-2: #F1F5F9;
+  --dsw-alias-brand-primary: #D4D7E0 !important;
+  --dsw-alias-accent: #D4D7E0 !important;
+  --dsw-alias-accent-ink: #0E0F14 !important;
+  --dsw-alias-accent-soft: rgba(212, 215, 224, 0.14) !important;
+  --dsw-alias-button-primary-fill: #D4D7E0 !important;
+  --dsw-alias-button-primary-hover: #E5E8F0 !important;
+  --dsw-alias-button-ghost-active-fill: rgba(212, 215, 224, 0.14) !important;
+  --dsw-alias-button-ghost-active-border: rgba(212, 215, 224, 0.36) !important;
+  --dsw-alias-interactive-bg-hover-accent: rgba(212, 215, 224, 0.16) !important;
+  --dsw-alias-state-business-primary: #D4D7E0 !important;
+}
+
+/* 浅色模式下的高对比度强调色覆写 */
+:root:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]):is([data-prism-accent="cobalt"], [data-ag-cs-accent="cobalt"]) {
+  --primary: #2563EB;
+  --link: #1D4ED8;
+  --ag-prism-cobalt: #2563EB;
+  --ag-prism-iris: #3B82F6;
+  --ag-prism-coral: #0284C7;
+  --ag-prism-amber: #60A5FA;
+  --ag-cs-accent: #2563EB;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#2563EB 0%, #4F46E5 100%);
+  --ag-cs-comet-bg: #2563EB;
+  --ag-cs-nav-active: #2563EB;
+  --dsw-alias-brand-primary: #2563EB !important;
+  --dsw-alias-accent: #2563EB !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(37, 99, 235, 0.12) !important;
+  --dsw-alias-button-primary-fill: #2563EB !important;
+  --dsw-alias-button-primary-hover: #1D4ED8 !important;
+  --dsw-alias-state-business-primary: #2563EB !important;
+}
+
+:root:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]):is([data-prism-accent="iris"], [data-ag-cs-accent="iris"]) {
+  --primary: #7C3AED;
+  --link: #6D28D9;
+  --ag-prism-cobalt: #7C3AED;
+  --ag-prism-iris: #8B5CF6;
+  --ag-prism-coral: #9333EA;
+  --ag-prism-amber: #A78BFA;
+  --ag-cs-accent: #7C3AED;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#8B5CF6 0%, #6D28D9 100%);
+  --ag-cs-comet-bg: #7C3AED;
+  --ag-cs-nav-active: #7C3AED;
+  --dsw-alias-brand-primary: #7C3AED !important;
+  --dsw-alias-accent: #7C3AED !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(124, 58, 237, 0.12) !important;
+  --dsw-alias-button-primary-fill: #7C3AED !important;
+  --dsw-alias-button-primary-hover: #6D28D9 !important;
+  --dsw-alias-state-business-primary: #7C3AED !important;
+}
+
+:root:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]):is([data-prism-accent="amber"], [data-ag-cs-accent="amber"]) {
+  --primary: #D97706;
+  --primary-foreground: #FFFFFF;
+  --link: #B45309;
+  --ag-prism-cobalt: #D97706;
+  --ag-prism-iris: #F59E0B;
+  --ag-prism-coral: #EA580C;
+  --ag-prism-amber: #B45309;
+  --ag-cs-accent: #D97706;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#F59E0B 0%, #B45309 100%);
+  --ag-cs-comet-bg: #D97706;
+  --ag-cs-nav-active: #D97706;
+  --dsw-alias-brand-primary: #D97706 !important;
+  --dsw-alias-accent: #D97706 !important;
+  --dsw-alias-accent-ink: #FFFFFF !important;
+  --dsw-alias-accent-soft: rgba(217, 119, 6, 0.12) !important;
+  --dsw-alias-button-primary-fill: #D97706 !important;
+  --dsw-alias-button-primary-hover: #B45309 !important;
+  --dsw-alias-state-business-primary: #D97706 !important;
+}
+
+:root:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]):is([data-prism-accent="mono"], [data-ag-cs-accent="mono"]) {
+  --primary: #334155;
+  --primary-foreground: #F8FAFC;
+  --link: #1E293B;
+  --ag-prism-cobalt: #334155;
+  --ag-prism-iris: #64748B;
+  --ag-prism-coral: #475569;
+  --ag-prism-amber: #0F172A;
+  --ag-cs-accent: #334155;
+  --ag-cs-data-ink: #475569;
+  --ag-cs-sidebar-sel-bar: linear-gradient(#475569 0%, #0F172A 100%);
+  --ag-cs-comet-bg: #334155;
+  --ag-cs-nav-active: #1E293B;
+  --dsw-alias-brand-primary: #334155 !important;
+  --dsw-alias-accent: #334155 !important;
+  --dsw-alias-accent-ink: #F8FAFC !important;
+  --dsw-alias-accent-soft: rgba(51, 65, 85, 0.11) !important;
+  --dsw-alias-button-primary-fill: #334155 !important;
+  --dsw-alias-button-primary-hover: #1E293B !important;
+  --dsw-alias-state-business-primary: #334155 !important;
+}
+
+/* --------------------------------------------------------------------------
+ * 四、三档圆角体系、等宽代码字体与连字、氛围光密度
+ * -------------------------------------------------------------------------- */
+:root[data-prism-corners="sharp"],
+html[data-ag-cs-corners="sharp"] {
+  --ag-cs-r-sm: 2px;
+  --ag-cs-r-md: 4px;
+  --ag-cs-r-lg: 6px;
+}
+
+:root[data-prism-corners="balanced"],
+html[data-ag-cs-corners="balanced"] {
+  --ag-cs-r-sm: 4px;
+  --ag-cs-r-md: 6px;
+  --ag-cs-r-lg: 10px;
+}
+
+:root[data-prism-corners="soft"],
+html[data-ag-cs-corners="soft"] {
+  --ag-cs-r-sm: 6px;
+  --ag-cs-r-md: 10px;
+  --ag-cs-r-lg: 14px;
+}
+
+/* 等宽代码字体栈（同步驱动 --dsw-font-mono / --dsw-font-family-mono） */
+:root[data-prism-code-font="jetbrains"],
+html[data-ag-cs-code-font="jetbrains"] {
+  --ag-cs-mono-stack: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, ui-monospace, monospace;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+:root[data-prism-code-font="cascadia"],
+html[data-ag-cs-code-font="cascadia"] {
+  --ag-cs-mono-stack: "Cascadia Code", "Cascadia Mono", "Fira Code", Consolas, ui-monospace, monospace;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+:root[data-prism-code-font="sfmono"],
+html[data-ag-cs-code-font="sfmono"] {
+  --ag-cs-mono-stack: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, ui-monospace, monospace;
+  --dsw-font-mono: var(--ag-cs-mono-stack) !important;
+  --dsw-font-family-mono: var(--ag-cs-mono-stack) !important;
+}
+
+/* Restrict code typography to enhanced output and Prism-rendered code. */
+html[data-prism-theme] :is(pre[data-ag-cs-code-enhanced="1"], pre[data-ag-cs-code-enhanced="1"] code, .dsh-code-body, .dsh-console-well, .ag-prism-thought-code, .ag-prism-thought-pre) {
+  font-family: var(--ag-cs-mono-stack);
+  tab-size: 2;
+  font-variant-ligatures: none;
+  font-feature-settings: "calt" 0, "liga" 0;
+}
+
+html:is([data-prism-ligatures="1"], [data-ag-cs-ligatures="1"]) :is(pre[data-ag-cs-code-enhanced="1"], pre[data-ag-cs-code-enhanced="1"] code, .dsh-code-body, .dsh-console-well, .ag-prism-thought-code, .ag-prism-thought-pre) {
+  font-variant-ligatures: contextual common-ligatures;
+  font-feature-settings: "calt" 1, "liga" 1;
+}
+
+/* 环境氛围光密度（0 / 0.35 / 0.7 / 1 及 0/35/70/100 兼容） */
+:root:is([data-prism-ambient="0"], [data-ag-cs-ambient="0"]) {
+  --ag-ambient-mul: 0;
+  --ag-prism-strength: 0;
+}
+
+html:is([data-prism-ambient="0"], [data-ag-cs-ambient="0"]) :is(#dsh-obsidian-prism-optics-layer .ag-cs-conv-aura-host, .ag-cs-conv-aura-host, .ag-cs-brand-glow, .ag-cs-ripple-canvas, .ag-cs-prism-rim-cv, .ag-cs-orch-canvas, .dsh-semantic-rim-aura) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+:root:is([data-prism-ambient="0.35"], [data-prism-ambient="35"], [data-ag-cs-ambient="0.35"], [data-ag-cs-ambient="35"]) {
+  --ag-ambient-mul: 0.45;
+}
+
+html:is([data-prism-ambient="0.35"], [data-prism-ambient="35"], [data-ag-cs-ambient="0.35"], [data-ag-cs-ambient="35"]) :is(.ag-cs-conv-aura-host, .ag-cs-brand-glow, .ag-cs-ripple-canvas, .ag-cs-orch-canvas) {
+  opacity: 0.38;
+}
+
+:root:is([data-prism-ambient="0.7"], [data-prism-ambient="70"], [data-ag-cs-ambient="0.7"], [data-ag-cs-ambient="70"]) {
+  --ag-ambient-mul: 0.78;
+}
+
+html:is([data-prism-ambient="0.7"], [data-prism-ambient="70"], [data-ag-cs-ambient="0.7"], [data-ag-cs-ambient="70"]) :is(.ag-cs-conv-aura-host, .ag-cs-brand-glow, .ag-cs-ripple-canvas, .ag-cs-orch-canvas) {
+  opacity: 0.72;
+}
+
+:root:is([data-prism-ambient="1"], [data-prism-ambient="100"], [data-ag-cs-ambient="1"], [data-ag-cs-ambient="100"]) {
+  --ag-ambient-mul: 1;
+}
+
+/* --------------------------------------------------------------------------
+ * 五、独立 React 安全光学挂载层 (#dsh-obsidian-prism-optics-layer)
+ *     零侵入 React 子树，层级严格控制在 z-index: 18（远低于 dsh-whale-widget 9999）
+ * -------------------------------------------------------------------------- */
+#dsh-obsidian-prism-optics-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 18;
+  overflow: hidden;
+  contain: layout style;
+}
+
+#dsh-obsidian-prism-optics-layer .dsh-optics-conv-bounds {
+  position: fixed;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#dsh-obsidian-prism-optics-layer .ag-cs-conv-aura-host,
+.ag-cs-conv-aura-host {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 32%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+
+.ag-cs-conv-glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* 3-State 语义边缘微光（等待决策 / 错误中断 / 长任务完成） */
+.dsh-semantic-rim-aura {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 280ms var(--ag-ease-out), box-shadow 280ms var(--ag-ease-out);
+}
+
+.dsh-semantic-rim-aura[data-aura-phase="awaiting-decision"] {
+  opacity: calc(0.92 * var(--ag-ambient-mul, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(242, 184, 75, 0.42),
+    inset 0 0 28px -6px rgba(242, 184, 75, 0.24),
+    inset 0 -36px 48px -20px rgba(242, 184, 75, 0.22);
+}
+
+.dsh-semantic-rim-aura[data-aura-phase="error-halted"] {
+  opacity: calc(0.95 * var(--ag-ambient-mul, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(229, 83, 75, 0.52),
+    inset 0 0 32px -6px rgba(229, 83, 75, 0.28),
+    inset 0 -36px 52px -18px rgba(229, 83, 75, 0.26);
+}
+
+.dsh-semantic-rim-aura[data-aura-phase="long-task-complete"] {
+  opacity: calc(0.9 * var(--ag-ambient-mul, 1));
+  box-shadow:
+    inset 0 0 0 1px rgba(80, 190, 147, 0.44),
+    inset 0 0 28px -6px rgba(80, 190, 147, 0.24),
+    inset 0 -36px 48px -20px rgba(80, 190, 147, 0.22);
+}
+
+/* 零重排 GPU Canvas 棱镜边（独立固定覆盖层，绝不侵入 React 节点） */
+#dsh-obsidian-prism-optics-layer .dsh-optics-rim-cv,
+.ag-cs-prism-rim-cv {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  box-sizing: border-box !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+  opacity: calc(var(--ag-prism-strength, 1) * var(--ag-prism-light-mul, 1));
+  transition: opacity 220ms ease;
+}
+
+/* 丝滑物理光标（独立固定层渲染，零侵入 React 编辑器子树） */
+[contenteditable="true"][data-ag-cs-smooth-caret="1"],
+textarea[data-ag-cs-smooth-caret="1"] {
+  caret-color: transparent !important;
+}
+
+#dsh-obsidian-prism-optics-layer .ag-cs-smooth-caret,
+.ag-cs-smooth-caret {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 20px;
+  border-radius: 1px;
+  background: var(--ag-cs-accent, var(--primary, #669DF6));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ag-cs-accent, var(--primary, #669DF6)) 55%, transparent);
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 55ms cubic-bezier(0.22, 1, 0.36, 1), opacity 70ms ease;
+}
+
+.ag-cs-smooth-caret[data-ag-cs-caret-visible="1"] {
+  opacity: 1;
+  visibility: visible;
+  will-change: transform;
+  animation: ag-cs-caret-blink 1.05s step-end infinite;
+}
+
+.ag-cs-smooth-caret[data-ag-cs-caret-visible="1"][data-ag-cs-caret-typing="1"] {
+  animation: none;
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+ * 六、DSH Desktop React SPA 与预览舞台表面适配（避让 dsh-whale-widget / dsh-better-sidebar）
+ * -------------------------------------------------------------------------- */
+/* The host chooses light/dark on body and may register normal inline aliases on
+   #root. Paint the canvas at each boundary, including empty/transition frames. */
+html[data-prism-theme],
+html[data-prism-theme] > body,
+html[data-prism-theme] #root,
+html[data-prism-theme] #root .mP3x-q_frame,
+html[data-prism-theme] #root .mP3x-q_frame > .mP3x-q_centerCol,
+html[data-prism-theme] body > [data-dsh-shell="true"],
+html[data-prism-theme] body > [data-dsh-shell="true"] :is(main.dsh-main, [data-dsh-chat="true"]),
+body[data-prism-theme],
+body[data-prism-theme] #root {
+  background-color: var(--dsw-alias-bg-base) !important;
+  color: var(--dsw-alias-label-primary);
+}
+
+/* body carries the host's first-paint light canvas and the alias layer. Paint
+   it again after a Prism theme switch so a stale light shorthand cannot leak
+   through the dark theme's transparent React surfaces. */
+html[data-prism-theme] > body,
+html[data-prism-theme] > body[data-ds-dark-theme],
+body[data-prism-theme] {
+  background-color: var(--dsw-alias-bg-base) !important;
+  background-image: none !important;
+  color: var(--dsw-alias-label-primary) !important;
+}
+
+html[data-prism-theme] #root {
+  --dsw-alias-bg-base: inherit !important;
+  --dsw-alias-bg-sidebar: inherit !important;
+  --dsw-alias-bg-composer: inherit !important;
+  --dsw-alias-border-l2: inherit !important;
+  --dsw-alias-label-primary: inherit !important;
+  --dsw-alias-label-secondary: inherit !important;
+  --dsw-alias-label-tertiary: inherit !important;
+  color-scheme: inherit !important;
+}
+
+/* AppFrame paints its own Windows caption. Its drag region and the grid's
+   collapse/resize transitions belong to DSH. */
+html[data-prism-theme][data-windows-titlebar] #root .mP3x-q_frame,
+html[data-prism-theme][data-windows-titlebar] #root .mP3x-q_frame::before {
+  background-color: var(--dsw-alias-bg-sidebar) !important;
+}
+
+html[data-prism-theme] :is(pre[data-ag-cs-code-enhanced="1"], .ag-cs-nav-outline-list) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsw-alias-scrollbar-bg-l2) transparent;
+}
+
+/* Only the verified column and its inner SidebarRoot paint the rail. Keep the
+   full 0.5px separator even on Windows and drawers, where AppFrame resets it. */
+html[data-prism-theme] [data-prism-sidebar="1"] {
+  --dsw-specific-sidebar-fill: var(--dsw-alias-bg-sidebar) !important;
+  background: var(--dsw-specific-sidebar-fill) !important;
+  color: var(--dsw-alias-label-primary);
+  border-right: 0.5px solid var(--dsw-alias-border-l2) !important;
+}
+
+html[data-prism-theme] [data-prism-sidebar="1"] .wtg9ga_root {
+  --dsw-specific-sidebar-fill: inherit !important;
+  background-color: var(--dsw-specific-sidebar-fill) !important;
+  color: var(--dsw-alias-label-primary);
+}
+
+@media (hover: hover) {
+  html[data-prism-theme] [data-prism-sidebar="1"] :is(
+    [data-sidebar-list-area] [role="treeitem"][aria-selected="false"],
+    [data-sidebar-list-area] [role="treeitem"][data-row-key^="workspace:"],
+    button.wtg9ga_panelRow:not([aria-current="page"]),
+    .dsh-thread-list > button.dsh-sidebar-item[data-selected="false"]
+  ):hover {
+    background-color: var(--ag-cs-sidebar-row-hover);
+    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ag-cs-accent) 60%, transparent);
+  }
+}
+
+/* Draw the selected stripe in the row background. The host uses its pseudo
+   elements for drag/drop indicators and its own outline for keyboard focus. */
+html[data-prism-theme] [data-prism-sidebar="1"] :is(
+  [data-sidebar-list-area] [role="treeitem"][aria-selected="true"],
+  button.wtg9ga_panelRow[aria-current="page"],
+  .dsh-thread-list > button.dsh-sidebar-item[data-selected="true"]
+) {
+  background-color: var(--ag-cs-sidebar-selected);
+  background-image: var(--ag-cs-sidebar-sel-bar);
+  background-position: left 3px center;
+  background-size: 2px 60%;
+  background-repeat: no-repeat;
+  box-shadow: var(--ag-cs-sidebar-sel-sh);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Compact the host's single-line sessions only. Search results have two lines. */
+html[data-prism-theme][data-ag-cs-sidebar-compact="1"] [data-prism-sidebar="1"] [data-sidebar-list-area] [role="treeitem"][data-row-key^="session:"] {
+  height: 28px;
+}
+html[data-prism-theme][data-ag-cs-sidebar-compact="1"] [data-prism-sidebar="1"] .dsh-thread-list > button.dsh-sidebar-item {
+  padding-block: 4px;
+}
+
+/* 首页 / 欢迎舞台波纹宿主 */
+.ag-cs-ripple-host {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ag-cs-brand-glow,
+.ag-cs-ripple-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+ * 6.5 上游 1.0.7 Smoked Obsidian / Faceted Surface 材质令牌
+ *     来源：obsidian-prism 1.0.7 的 smoked men/panel、faceted bubble 与
+ *     keycap 材质。DSH v44.7 没有 Antigravity 的 artifact/diff DOM，因此这里
+ *     只定义可复用于真实用户气泡、附件、队列与原生浮层的材质变量。
+ * -------------------------------------------------------------------------- */
+:root,
+html[data-prism-theme] {
+  --ag-cs-smoke-user-fill: rgba(25, 28, 37, 0.92);
+  --ag-cs-smoke-assistant-fill: rgba(20, 22, 29, 0.9);
+  --ag-cs-smoke-edge: rgba(225, 236, 255, 0.16);
+  --ag-cs-smoke-edge-soft: rgba(225, 236, 255, 0.08);
+  --ag-cs-smoke-specular: rgba(255, 255, 255, 0.18);
+  --ag-cs-smoke-reflect: rgba(116, 169, 255, 0.1);
+  --ag-cs-smoke-vein: rgba(154, 198, 255, 0.09);
+  --ag-cs-smoke-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.46),
+    0 10px 30px -18px rgba(0, 0, 0, 0.82);
+
+  --ag-cs-smoke-menu-fill: rgba(16, 18, 24, 0.96);
+  --ag-cs-smoke-menu-edge: rgba(226, 236, 255, 0.16);
+  --ag-cs-smoke-menu-spec: rgba(255, 255, 255, 0.18);
+  --ag-cs-smoke-row-hover: rgba(132, 176, 255, 0.09);
+  --ag-cs-smoke-row-selected: rgba(115, 162, 255, 0.14);
+  --ag-cs-smoke-row-bar: linear-gradient(#8DD2FF 0%, #669DF6 58%, #9B72CB 100%);
+  --ag-cs-smoke-row-bar-shadow: 0 0 7px rgba(102, 157, 246, 0.42);
+  --ag-cs-smoke-keycap-fill: rgba(255, 255, 255, 0.055);
+  --ag-cs-smoke-keycap-edge: rgba(230, 240, 255, 0.12);
+  --ag-cs-smoke-keycap-sh:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+  --ag-cs-smoke-scroll: rgba(180, 204, 245, 0.24);
+  --ag-cs-smoke-scroll-hover: rgba(198, 220, 255, 0.42);
+}
+
+html[data-prism-theme="warm"] {
+  --ag-cs-smoke-user-fill: rgba(31, 28, 25, 0.93);
+  --ag-cs-smoke-assistant-fill: rgba(27, 25, 22, 0.92);
+  --ag-cs-smoke-edge: rgba(255, 240, 224, 0.17);
+  --ag-cs-smoke-edge-soft: rgba(255, 240, 224, 0.085);
+  --ag-cs-smoke-specular: rgba(255, 246, 235, 0.18);
+  --ag-cs-smoke-reflect: rgba(240, 147, 111, 0.1);
+  --ag-cs-smoke-vein: rgba(229, 147, 119, 0.1);
+  --ag-cs-smoke-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.46),
+    0 10px 30px -18px rgba(0, 0, 0, 0.78);
+
+  --ag-cs-smoke-menu-fill: rgba(26, 24, 21, 0.96);
+  --ag-cs-smoke-menu-edge: rgba(255, 241, 226, 0.16);
+  --ag-cs-smoke-menu-spec: rgba(255, 246, 235, 0.17);
+  --ag-cs-smoke-row-hover: rgba(240, 163, 126, 0.09);
+  --ag-cs-smoke-row-selected: rgba(217, 119, 87, 0.15);
+  --ag-cs-smoke-row-bar: linear-gradient(#F6C2A8 0%, #E59377 58%, #D97757 100%);
+  --ag-cs-smoke-row-bar-shadow: 0 0 7px rgba(217, 119, 87, 0.42);
+  --ag-cs-smoke-keycap-fill: rgba(255, 246, 235, 0.06);
+  --ag-cs-smoke-keycap-edge: rgba(255, 237, 220, 0.12);
+  --ag-cs-smoke-keycap-sh:
+    inset 0 1px 0 rgba(255, 248, 236, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.28);
+  --ag-cs-smoke-scroll: rgba(245, 218, 198, 0.24);
+  --ag-cs-smoke-scroll-hover: rgba(255, 234, 218, 0.42);
+}
+
+html:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"]) {
+  --ag-cs-smoke-edge: rgba(15, 23, 42, 0.16);
+  --ag-cs-smoke-edge-soft: rgba(15, 23, 42, 0.075);
+  --ag-cs-smoke-specular: rgba(255, 255, 255, 0.94);
+  --ag-cs-smoke-reflect: rgba(37, 99, 235, 0.075);
+  --ag-cs-smoke-vein: rgba(37, 99, 235, 0.06);
+  --ag-cs-smoke-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 10px 30px -18px rgba(30, 58, 138, 0.2);
+
+  --ag-cs-smoke-menu-fill: rgba(250, 252, 255, 0.975);
+  --ag-cs-smoke-menu-edge: rgba(15, 23, 42, 0.16);
+  --ag-cs-smoke-menu-spec: rgba(255, 255, 255, 0.98);
+  --ag-cs-smoke-row-hover: rgba(37, 99, 235, 0.07);
+  --ag-cs-smoke-row-selected: rgba(37, 99, 235, 0.11);
+  --ag-cs-smoke-row-bar: linear-gradient(#60A5FA 0%, #2563EB 62%, #4F46E5 100%);
+  --ag-cs-smoke-row-bar-shadow: 0 0 6px rgba(37, 99, 235, 0.32);
+  --ag-cs-smoke-keycap-fill: rgba(248, 251, 255, 0.92);
+  --ag-cs-smoke-keycap-edge: rgba(15, 23, 42, 0.12);
+  --ag-cs-smoke-keycap-sh:
+    inset 0 1px 0 #FFFFFF,
+    inset 0 -1px 0 rgba(15, 23, 42, 0.08),
+    0 1px 2px rgba(15, 23, 42, 0.1);
+  --ag-cs-smoke-scroll: rgba(15, 23, 42, 0.2);
+  --ag-cs-smoke-scroll-hover: rgba(15, 23, 42, 0.36);
+}
+
+html[data-prism-theme="crystal"] {
+  --ag-cs-smoke-user-fill: rgba(234, 242, 253, 0.93);
+  --ag-cs-smoke-assistant-fill: rgba(251, 253, 255, 0.95);
+}
+
+html[data-prism-theme="alabaster"] {
+  --ag-cs-smoke-user-fill: rgba(239, 233, 222, 0.94);
+  --ag-cs-smoke-assistant-fill: rgba(251, 248, 242, 0.96);
+  --ag-cs-smoke-edge: rgba(74, 55, 34, 0.17);
+  --ag-cs-smoke-edge-soft: rgba(74, 55, 34, 0.08);
+  --ag-cs-smoke-reflect: rgba(194, 89, 52, 0.07);
+  --ag-cs-smoke-vein: rgba(194, 89, 52, 0.06);
+  --ag-cs-smoke-shadow:
+    0 1px 2px rgba(42, 32, 20, 0.06),
+    0 10px 30px -18px rgba(68, 52, 32, 0.2);
+
+  --ag-cs-smoke-menu-fill: rgba(252, 249, 243, 0.975);
+  --ag-cs-smoke-menu-edge: rgba(74, 55, 34, 0.17);
+  --ag-cs-smoke-menu-spec: rgba(255, 255, 255, 0.98);
+  --ag-cs-smoke-row-hover: rgba(194, 89, 52, 0.07);
+  --ag-cs-smoke-row-selected: rgba(194, 89, 52, 0.11);
+  --ag-cs-smoke-row-bar: linear-gradient(#E7A083 0%, #C25934 62%, #9A3412 100%);
+  --ag-cs-smoke-row-bar-shadow: 0 0 6px rgba(194, 89, 52, 0.3);
+  --ag-cs-smoke-keycap-fill: rgba(252, 249, 243, 0.94);
+  --ag-cs-smoke-keycap-edge: rgba(74, 55, 34, 0.13);
+  --ag-cs-smoke-scroll: rgba(42, 32, 20, 0.2);
+  --ag-cs-smoke-scroll-hover: rgba(42, 32, 20, 0.36);
+}
+
+/* --------------------------------------------------------------------------
+ * 七、0.5px 镜面描边卡片、对话气泡、Console Well 与吸顶代码块
+ * -------------------------------------------------------------------------- */
+.dsh-specular-card,
+.dsh-card,
+[data-dsh-card] {
+  background-color: var(--dsw-alias-bg-layer-2, var(--card));
+  background-image: var(--ag-cs-sheen);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l2, var(--ag-cs-border-2));
+  border-radius: var(--ag-cs-r-lg);
+  box-shadow: inset 0 var(--ag-cs-hairline) 0 var(--ag-cs-specular), var(--ag-cs-bubble-sh);
+}
+
+/* v44.7 UserContent attaches both attributes to the primitive bubble itself;
+   its attachments, reference summary and action bar stay outside this node. */
+html[data-prism-theme] :is(
+  #root[data-prism-bubbles="1"],
+  body > [data-dsh-shell="true"][data-prism-bubbles="1"]
+) [data-message-bubble][data-text-interaction-source],
+html[data-prism-theme] body > [data-dsh-shell="true"][data-prism-bubbles="1"] [data-dsh-chat="true"] .dsh-user-bubble {
+  --dsw-specific-bubble: var(--prism-message-user-bg, var(--ag-cs-bubble));
+  box-sizing: border-box;
+  background-color: color-mix(in srgb, var(--dsw-specific-bubble) 76%, var(--ag-cs-smoke-user-fill));
+  background-image:
+    linear-gradient(
+      118deg,
+      transparent 0%,
+      transparent 8.5%,
+      color-mix(in srgb, var(--ag-cs-smoke-specular) 54%, transparent) 9%,
+      transparent 13.5%
+    ),
+    linear-gradient(
+      63deg,
+      transparent 0%,
+      transparent 72%,
+      var(--ag-cs-smoke-vein) 72.5%,
+      transparent 79%
+    ),
+    radial-gradient(
+      128% 112% at 17% -30%,
+      color-mix(in srgb, var(--ag-cs-smoke-specular) 65%, transparent) 0%,
+      transparent 57%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ag-cs-smoke-specular) 48%, transparent) 0%,
+      transparent 19%,
+      transparent 70%,
+      var(--ag-cs-smoke-reflect) 100%
+    ),
+    var(--ag-cs-sheen);
+  background-repeat: no-repeat;
+  border: 1px solid var(--ag-cs-smoke-edge);
+  border-radius: var(--ag-cs-r-md);
+  box-shadow:
+    inset 0 1px 0 var(--ag-cs-smoke-specular),
+    inset 0 -1px 0 var(--ag-cs-smoke-reflect),
+    inset 1px 0 0 var(--ag-cs-smoke-edge-soft),
+    var(--ag-cs-smoke-shadow);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* AssistantMarkdown.body > MarkdownText.markdown in v44.7. Assistant prose
+   follows the upstream Antigravity reading surface: plain flowing markdown with
+   no enclosing card, border or smoke fill. Reasoning/tools remain native. */
+html[data-prism-theme] #root[data-prism-bubbles="1"] [data-chat-flow] [data-chat-flow-kind="assistant-step"]:not([data-chat-group-part="reasoning"]) .xMeOpW_body > ._markdown_13jw0_5:not(:empty),
+html[data-prism-theme] body > [data-dsh-shell="true"][data-prism-bubbles="1"] [data-dsh-chat="true"] .dsh-assistant-msg > :is(p, .dsh-assistant-prose):not(:empty) {
+  --dsw-alias-link: var(--link);
+  --dsw-alias-markdown-inline-code: var(--ag-cs-code-well);
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--dsw-alias-label-primary);
+  /* Deliberately no overflow, display, font, or descendant reset: keep the
+     host's wide-table breakout, sticky banners, selectable text and type scale. */
+}
+
+/* v44.7 UserContent renders file attachments outside the user bubble and gives
+   each one a direct span[title] child of [data-message-attachments]. Image
+   slots use their own wrapper nodes, so they remain untouched. */
+html[data-prism-theme] :is(
+  #root[data-prism-bubbles="1"],
+  body > [data-dsh-shell="true"][data-prism-bubbles="1"]
+) [data-message-attachments] > span[title] {
+  background-color: color-mix(in srgb, var(--dsw-alias-bg-layer-2) 84%, var(--ag-cs-smoke-user-fill));
+  background-image:
+    linear-gradient(
+      124deg,
+      transparent 0%,
+      transparent 15%,
+      color-mix(in srgb, var(--ag-cs-smoke-specular) 44%, transparent) 15.5%,
+      transparent 24%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--ag-cs-smoke-specular) 28%, transparent) 0%, transparent 28%),
+    var(--ag-cs-sheen);
+  border: 1px solid var(--ag-cs-smoke-edge);
+  box-shadow:
+    inset 0 1px 0 var(--ag-cs-smoke-specular),
+    inset 0 -1px 0 var(--ag-cs-smoke-reflect),
+    var(--ag-cs-smoke-shadow);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+@media (hover: hover) {
+  html[data-prism-theme] :is(
+    #root[data-prism-bubbles="1"],
+    body > [data-dsh-shell="true"][data-prism-bubbles="1"]
+  ) [data-message-attachments] > span[title]:hover {
+    border-color: color-mix(in srgb, var(--ag-cs-smoke-edge) 64%, var(--primary));
+    box-shadow:
+      inset 0 1px 0 var(--ag-cs-smoke-specular),
+      inset 0 -1px 0 var(--ag-cs-smoke-reflect),
+      0 0 0 1px color-mix(in srgb, var(--primary) 12%, transparent),
+      var(--ag-cs-smoke-shadow);
+  }
+}
+
+/* QueueDock.module.css owns the actual material through the panel ::before and
+   hairline through ::after. QueueDock.tsx exposes stable data-queue-dock and
+   data-submission-echo hooks, so only those verified nodes are painted. */
+html[data-prism-theme] [data-queue-dock] > div:first-child::before {
+  background-color: var(--ag-cs-smoke-menu-fill) !important;
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 44%, transparent) 0%,
+      transparent 18%,
+      transparent 78%,
+      color-mix(in srgb, var(--ag-cs-smoke-reflect) 64%, transparent) 100%
+    ),
+    linear-gradient(
+      118deg,
+      transparent 0%,
+      transparent 26%,
+      color-mix(in srgb, var(--ag-cs-smoke-vein) 72%, transparent) 26.5%,
+      transparent 34%
+    ),
+    radial-gradient(
+      110% 80px at 20% 0%,
+      color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 42%, transparent) 0%,
+      transparent 70%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 var(--ag-cs-smoke-menu-spec),
+    inset 0 -1px 0 var(--ag-cs-smoke-reflect) !important;
+  backdrop-filter: blur(18px) saturate(145%) !important;
+}
+
+html[data-prism-theme] [data-queue-dock] > div:first-child::after {
+  border-color: var(--ag-cs-smoke-menu-edge) !important;
+  box-shadow: inset 1px 0 0 var(--ag-cs-smoke-edge-soft);
+}
+
+html[data-prism-theme] [data-queue-dock] ul {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ag-cs-smoke-scroll) transparent;
+}
+
+html[data-prism-theme] [data-queue-dock] ul::-webkit-scrollbar {
+  width: 6px;
+}
+
+html[data-prism-theme] [data-queue-dock] ul::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--ag-cs-smoke-scroll);
+}
+
+html[data-prism-theme] [data-queue-dock] ul::-webkit-scrollbar-thumb:hover {
+  background: var(--ag-cs-smoke-scroll-hover);
+}
+
+html[data-prism-theme] [data-queue-dock] li {
+  transition: background-color 130ms ease, box-shadow 130ms ease;
+}
+
+@media (hover: hover) {
+  html[data-prism-theme] [data-queue-dock] li:hover {
+    background-color: var(--ag-cs-smoke-row-hover);
+  }
+}
+
+html[data-prism-theme] [data-queue-dock] li[data-submission-echo] {
+  background-image:
+    linear-gradient(90deg, color-mix(in srgb, var(--primary) 8%, transparent) 0%, transparent 74%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 18%, transparent) 0%, transparent 45%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 32%, transparent);
+}
+
+/* QueueFile is the only span carrying both aria-label and title in QueueDock. */
+html[data-prism-theme] [data-queue-dock] span[aria-label][title] {
+  background-color: color-mix(in srgb, var(--dsw-alias-bg-base) 72%, var(--ag-cs-smoke-menu-fill));
+  background-image:
+    linear-gradient(132deg, transparent 0%, transparent 18%, var(--ag-cs-smoke-vein) 19%, transparent 30%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 26%, transparent) 0%, transparent 35%);
+  border-color: var(--ag-cs-smoke-edge-soft);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 44%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--ag-cs-smoke-reflect) 64%, transparent);
+}
+
+/* Queue action buttons have aria-label; the 36px header does not, so the
+   keycap treatment cannot alter the collapsible header hit target. */
+html[data-prism-theme] [data-queue-dock] button[aria-label] {
+  background-color: var(--ag-cs-smoke-keycap-fill);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 34%, transparent) 0%,
+    transparent 54%
+  );
+  box-shadow:
+    0 0 0 0.5px var(--ag-cs-smoke-keycap-edge),
+    var(--ag-cs-smoke-keycap-sh);
+  color: var(--dsw-alias-label-secondary);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 120ms var(--ag-ease-spring);
+}
+
+@media (hover: hover) {
+  html[data-prism-theme] [data-queue-dock] button[aria-label]:hover:not(:disabled) {
+    background-color: color-mix(in srgb, var(--ag-cs-smoke-keycap-fill) 66%, var(--primary));
+    border-color: color-mix(in srgb, var(--ag-cs-smoke-keycap-edge) 58%, var(--primary));
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+html[data-prism-theme] [data-queue-dock] button[aria-label]:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Native DSH menus are body portals. v44.7 ModelSelect.tsx keeps the root pane
+   as role=group[aria-label], the effort pane as role=menu, and model groups as
+   nested role=menu. InputBar.tsx registers the permission slot whose menu uses
+   the same role=menu primitive; settings/stats use role=dialog. Only visual
+   material is rebound below. */
+html[data-prism-theme] body > :is(
+  [role="menu"],
+  [role="listbox"],
+  [role="dialog"],
+  [role="alertdialog"],
+  [role="group"][aria-label]
+),
+html[data-prism-theme] #root :is(
+  [role="dialog"],
+  [data-composer-overlay] [role="menu"],
+  [data-composer-overlay] [role="listbox"],
+  [data-composer-overlay] [role="group"][aria-label]
+) {
+  box-sizing: border-box;
+  background-color: var(--ag-cs-smoke-menu-fill) !important;
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 46%, transparent) 0%,
+      transparent 17%,
+      transparent 80%,
+      color-mix(in srgb, var(--ag-cs-smoke-reflect) 58%, transparent) 100%
+    ),
+    linear-gradient(
+      116deg,
+      transparent 0%,
+      transparent 24%,
+      color-mix(in srgb, var(--ag-cs-smoke-vein) 76%, transparent) 24.5%,
+      transparent 34%
+    ),
+    radial-gradient(
+      110% 78px at 24% 0%,
+      color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 38%, transparent) 0%,
+      transparent 72%
+    ) !important;
+  border: 1px solid var(--ag-cs-smoke-menu-edge) !important;
+  border-radius: var(--ag-cs-r-lg);
+  box-shadow:
+    inset 0 1px 0 var(--ag-cs-smoke-menu-spec),
+    inset 0 -1px 0 var(--ag-cs-smoke-reflect),
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 22px 52px -16px rgba(0, 0, 0, 0.58) !important;
+  backdrop-filter: blur(18px) saturate(145%);
+  color: var(--dsw-alias-label-primary) !important;
+}
+
+html:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"]) body > :is(
+  [role="menu"],
+  [role="listbox"],
+  [role="dialog"],
+  [role="alertdialog"],
+  [role="group"][aria-label]
+),
+html:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"]) #root :is(
+  [role="dialog"],
+  [data-composer-overlay] [role="menu"],
+  [data-composer-overlay] [role="listbox"],
+  [data-composer-overlay] [role="group"][aria-label]
+) {
+  box-shadow:
+    inset 0 1px 0 var(--ag-cs-smoke-menu-spec),
+    inset 0 -1px 0 color-mix(in srgb, var(--ag-cs-smoke-edge) 58%, transparent),
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 20px 44px -18px rgba(30, 58, 138, 0.22) !important;
+}
+
+/* ModelSelect's model group is an inner scroll region, not another surface.
+   Keep its host overflow, focus and scroll semantics intact. */
+html[data-prism-theme] body > :is(
+  [role="group"][aria-label],
+  [role="menu"],
+  [role="dialog"]
+) :is([role="menu"], [role="listbox"]) {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  border-radius: inherit;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-prism-theme] :is(
+  .dsh-vial-popover,
+  .pv-card,
+  .ag-cs-nav-outline-popover
+) {
+  background-color: var(--ag-cs-smoke-menu-fill) !important;
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 42%, transparent) 0%,
+      transparent 20%,
+      transparent 82%,
+      color-mix(in srgb, var(--ag-cs-smoke-reflect) 54%, transparent) 100%
+    ),
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      transparent 28%,
+      color-mix(in srgb, var(--ag-cs-smoke-vein) 74%, transparent) 28.5%,
+      transparent 37%
+    ) !important;
+  border-color: var(--ag-cs-smoke-menu-edge) !important;
+  box-shadow:
+    inset 0 1px 0 var(--ag-cs-smoke-menu-spec),
+    inset 0 -1px 0 var(--ag-cs-smoke-reflect),
+    0 20px 48px -16px rgba(0, 0, 0, 0.52) !important;
+}
+
+html[data-prism-theme] :is(
+  [role="menu"],
+  [role="listbox"],
+  [role="dialog"],
+  [role="alertdialog"],
+  .dsh-vial-popover,
+  .ag-cs-nav-outline-popover
+) :is([role="separator"], hr) {
+  height: 1px !important;
+  margin-block: 4px !important;
+  border: 0 !important;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--ag-cs-smoke-edge-soft) 12%,
+    var(--ag-cs-smoke-edge) 50%,
+    var(--ag-cs-smoke-edge-soft) 88%,
+    transparent 100%
+  ) !important;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]
+) {
+  position: relative;
+  border-radius: var(--ag-cs-r-sm);
+  color: var(--dsw-alias-label-primary) !important;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    color 120ms ease;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]
+):is(:hover, [data-highlighted]) {
+  background-color: var(--ag-cs-smoke-row-hover) !important;
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 22%, transparent) 0%,
+    transparent 46%
+  ) !important;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 40%, transparent);
+  color: var(--dsw-alias-label-primary) !important;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]
+):is(:hover, [data-highlighted])::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 8px;
+  bottom: 8px;
+  width: 1.5px;
+  border-radius: 999px;
+  background: var(--ag-cs-smoke-row-bar);
+  opacity: 0.56;
+  pointer-events: none;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]
+):is([aria-selected="true"], [aria-checked="true"], [data-selected="true"]) {
+  background-color: var(--ag-cs-smoke-row-selected) !important;
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 28%, transparent) 0%,
+    transparent 54%
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 48%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--ag-cs-smoke-reflect) 54%, transparent);
+  color: var(--dsw-alias-label-primary) !important;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]
+):is([aria-selected="true"], [aria-checked="true"], [data-selected="true"])::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--ag-cs-smoke-row-bar);
+  box-shadow: var(--ag-cs-smoke-row-bar-shadow);
+  opacity: 1;
+  pointer-events: none;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  [role="menuitem"],
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]
+):disabled,
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is([role="option"][aria-disabled="true"]) {
+  color: var(--dsw-alias-label-tertiary) !important;
+  opacity: 0.62;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea,
+  [role="combobox"],
+  [role="searchbox"]
+) {
+  background-color: color-mix(in srgb, var(--ag-cs-smoke-menu-fill) 72%, var(--dsw-alias-bg-base)) !important;
+  border-color: var(--ag-cs-smoke-edge-soft) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.18),
+    inset 0 -1px 0 color-mix(in srgb, var(--ag-cs-smoke-reflect) 38%, transparent) !important;
+  color: var(--dsw-alias-label-primary) !important;
+  caret-color: var(--primary);
+  accent-color: var(--primary);
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) :is(input, textarea)::placeholder {
+  color: var(--dsw-alias-label-tertiary) !important;
+  opacity: 1;
+}
+
+/* Stable `scrollable` marker is added beside the CSS-module class in
+   ModelSelect.tsx. Keep the host's overflow and scroll anchoring unchanged. */
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) .scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ag-cs-smoke-scroll) transparent;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) .scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) .scrollable::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--ag-cs-smoke-scroll);
+}
+
+html[data-prism-theme] :is(
+  body > [role="menu"],
+  body > [role="group"][aria-label],
+  #root [role="dialog"],
+  #root [data-composer-overlay] :is([role="menu"], [role="group"][aria-label])
+) .scrollable::-webkit-scrollbar-thumb:hover {
+  background: var(--ag-cs-smoke-scroll-hover);
+}
+
+/* Permission trigger lives in the verified composer.input.permission slot.
+   Rebind only its material; geometry, labels and menu behavior stay native. */
+html[data-prism-theme] [data-slot="conversation.input.permission"] :is(
+  button[aria-haspopup="menu"],
+  button[aria-haspopup="dialog"]
+) {
+  border-radius: var(--ag-cs-r-sm);
+  color: var(--dsw-alias-label-secondary);
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+@media (hover: hover) {
+  html[data-prism-theme] [data-slot="conversation.input.permission"] :is(
+    button[aria-haspopup="menu"],
+    button[aria-haspopup="dialog"]
+  ):hover:not(:disabled) {
+    background-color: var(--ag-cs-smoke-row-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+html[data-prism-theme] [data-slot="conversation.input.permission"] :is(
+  button[aria-haspopup="menu"],
+  button[aria-haspopup="dialog"]
+)[aria-expanded="true"] {
+  background-color: var(--ag-cs-smoke-row-selected);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ag-cs-smoke-menu-spec) 42%, transparent),
+    inset 2px 0 0 var(--primary);
+  color: var(--dsw-alias-label-primary);
+}
+
+/* Console Well 下沉精密控制台井槽 */
+.console-well,
+.dsh-console-well,
+[data-dsh-console-well] {
+  position: relative;
+  background-color: var(--ag-cs-console-well);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  border-radius: var(--ag-cs-r-md);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.32),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.04),
+    0 1px 0 var(--ag-cs-specular);
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+  font-family: var(--ag-cs-mono-stack);
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow: auto;
+}
+
+html:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]) :is(.console-well, .dsh-console-well, [data-dsh-console-well]) {
+  box-shadow:
+    inset 0 1px 4px rgba(15, 23, 42, 0.08),
+    inset 0 0 0 0.5px rgba(15, 23, 42, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* 代码块与吸顶玻璃顶栏、>=48 行手动折叠按钮与渐变遮罩（非破坏性支持 React SPA 代码块） */
+.dsh-code-block,
+[data-dsh-code-block],
+pre[data-ag-cs-code-enhanced="1"] {
+  position: relative;
+  border-radius: var(--ag-cs-r-md);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  background-color: var(--dsw-alias-bg-code, var(--ag-cs-code-well));
+  box-shadow: var(--ag-cs-bubble-sh);
+}
+
+.dsh-code-block > .dsh-code-header,
+.dsh-code-header,
+[data-ag-cs-code-sticky="1"],
+pre > div > [data-ag-cs-code-sticky="1"] {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: calc(var(--ag-cs-r-md) - 1px) calc(var(--ag-cs-r-md) - 1px) 0 0;
+  border-bottom: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  background-color: color-mix(in srgb, var(--dsw-alias-bg-layer-2, var(--card)) 88%, var(--dsw-alias-bg-base, var(--background)));
+  backdrop-filter: blur(12px) saturate(135%);
+  box-shadow: inset 0 1px 0 var(--ag-cs-specular);
+  font-size: 11.5px;
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+}
+
+.ag-cs-code-fold-btn,
+.dsh-code-fold-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  background: var(--ag-cs-pill-bg);
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.ag-cs-code-fold-btn:hover,
+.dsh-code-fold-btn:hover {
+  background: var(--dsw-alias-interactive-bg-hover, var(--ag-cs-hover-wash));
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--ag-cs-border-2));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+[data-ag-cs-code-folded="1"] > .dsh-code-body,
+[data-ag-cs-code-folded="1"] > pre,
+pre[data-ag-cs-code-folded="1"],
+pre > div[data-ag-cs-code-folded="1"] > div:nth-child(2) {
+  max-height: 156px !important;
+  overflow: hidden !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 56%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 56%, transparent 100%);
+}
+
+/* --------------------------------------------------------------------------
+ * 八、毛玻璃悬浮输入座舱 (Composer Dock，兼容 DSH Desktop React 输入卡片)
+ * -------------------------------------------------------------------------- */
+/* The seat can be hero, docked or embedded. Paint only InputBar's card.
+   Inset strokes keep its metrics and leave the workspace-picker dashed ring
+   (::after), popup slot, editor, selection and IME layers to the host. */
+html[data-prism-theme] [data-prism-composer="1"] {
+  --dsw-specific-input-major: var(--dsw-alias-bg-composer) !important;
+  --dsw-radius-panel: var(--ag-cs-r-lg);
+  --prism-card-edge: var(--dsw-alias-border-l2);
+  border-radius: var(--dsw-radius-panel);
+  background:
+    linear-gradient(0deg, color-mix(in srgb, var(--ag-prism-iris, #9b72cb) 18%, transparent), transparent) left bottom / 100% 18px no-repeat,
+    linear-gradient(90deg, var(--ag-prism-cobalt, #4285f4), var(--ag-prism-iris, #9b72cb), var(--ag-prism-coral, #ea4335), var(--ag-prism-amber, #fbbc04), var(--ag-prism-cobalt, #4285f4)) left bottom / 100% 1.5px no-repeat,
+    var(--ag-cs-sheen),
+    var(--dsw-specific-input-major) !important;
+  backdrop-filter: blur(18px) saturate(135%);
+  box-shadow:
+    inset 0 0 0 0.5px var(--prism-card-edge),
+    inset 0 1px 0 var(--ag-cs-specular),
+    0 5px 20px -12px color-mix(in srgb, var(--ag-prism-cobalt, #4285f4) 62%, transparent),
+    0 8px 24px -14px color-mix(in srgb, var(--ag-prism-iris, #9b72cb) 52%, transparent),
+    var(--ag-cs-composer-shadow);
+  color: var(--dsw-alias-label-primary);
+}
+
+html[data-prism-theme] [data-prism-composer="1"]:focus-within {
+  --prism-card-edge: color-mix(in srgb, var(--primary) 64%, var(--dsw-alias-border-l2));
+  box-shadow:
+    inset 0 0 0 1px var(--prism-card-edge),
+    inset 0 2px 0 var(--ag-cs-focus-spec),
+    0 0 0 3px var(--ag-cs-focus-halo),
+    0 5px 20px -12px color-mix(in srgb, var(--ag-prism-cobalt, #4285f4) 62%, transparent),
+    0 8px 24px -14px color-mix(in srgb, var(--ag-prism-iris, #9b72cb) 52%, transparent),
+    var(--ag-cs-composer-shadow);
+}
+
+html[data-prism-theme] [data-prism-composer="1"] > [data-input-scroll] [data-composer-input][role="textbox"],
+html[data-prism-theme] [data-dsh-composer="true"][data-prism-composer="1"] #dsh-composer-editor {
+  color: var(--dsw-alias-label-primary);
+  caret-color: var(--primary);
+}
+
+html[data-prism-theme] [data-prism-composer="1"] > [data-input-scroll] [data-composer-input][aria-disabled="true"] {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* Real placeholder is a sibling of the Lexical textbox. Only bind its ink,
+   also used by the native inline command hint. */
+html[data-prism-theme] [data-prism-composer="1"] > [data-input-scroll] {
+  --dsw-alias-label-caption: var(--dsw-alias-label-tertiary) !important;
+}
+
+html[data-prism-theme] [data-prism-composer="1"] > [data-input-scroll] [data-composer-placeholder],
+html[data-prism-theme] [data-dsh-composer="true"][data-prism-composer="1"] #dsh-composer-editor:empty::before {
+  color: var(--dsw-alias-label-tertiary);
+  opacity: 1;
+}
+
+html[data-ag-cs-placeholder-style="studio"] [data-prism-composer="1"] > [data-input-scroll] [data-composer-placeholder],
+html[data-ag-cs-placeholder-style="studio"] [data-dsh-composer="true"][data-prism-composer="1"] #dsh-composer-editor:empty::before {
+  color: color-mix(in srgb, var(--primary) 42%, var(--dsw-alias-label-tertiary));
+  font-weight: 500;
+  letter-spacing: 0.015em;
+}
+
+html[data-ag-cs-placeholder-style="host"] [data-prism-composer="1"] > [data-input-scroll] [data-composer-placeholder],
+html[data-ag-cs-placeholder-style="host"] [data-dsh-composer="true"][data-prism-composer="1"] #dsh-composer-editor:empty::before {
+  color: var(--dsw-alias-label-tertiary);
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+/* Native controls keep their own size, icons, transform and disabled/sending
+   behavior. Scope toolbar tokens here so open menus can use their own surfaces. */
+html[data-prism-theme] [data-prism-composer="1"] > .GRgSLq_row {
+  --dsw-specific-selector: var(--sidebar-secondary) !important;
+  --dsw-alias-interactive-bg-hover-solid: color-mix(in srgb, var(--foreground) 14%, var(--card));
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* Native mode, model, attachment and trailing controls keep their geometry.
+   Only ink is rebound, with the send/stop rule below taking precedence. */
+html[data-prism-theme] [data-prism-composer="1"] > .GRgSLq_row :is(button, [role="button"]) {
+  color: var(--dsw-alias-label-secondary);
+}
+
+html[data-prism-theme] [data-prism-composer="1"] > .GRgSLq_row button.GRgSLq_add {
+  background-color: var(--dsw-specific-selector);
+  color: var(--dsw-alias-label-primary);
+}
+
+html[data-prism-theme] :is(
+  [data-prism-composer="1"] > .GRgSLq_row button.GRgSLq_primary,
+  [data-dsh-composer="true"][data-prism-composer="1"] :is(#btn-composer-send, #btn-composer-stop)
+) {
+  background: linear-gradient(var(--ag-cs-send-spec), transparent 55%), var(--ag-cs-send-bg);
+  color: var(--ag-cs-send-fg);
+  box-shadow: var(--ag-cs-send-sh);
+}
+
+@media (hover: hover) {
+  html[data-prism-theme] [data-prism-composer="1"] > .GRgSLq_row button.GRgSLq_add:hover:enabled {
+    background-color: var(--dsw-alias-interactive-bg-hover-solid);
+  }
+  html[data-prism-theme] :is(
+    [data-prism-composer="1"] > .GRgSLq_row button.GRgSLq_primary,
+    [data-dsh-composer="true"][data-prism-composer="1"] :is(#btn-composer-send, #btn-composer-stop)
+  ):hover:enabled {
+    background-color: color-mix(in srgb, var(--ag-cs-send-bg) 90%, var(--primary));
+  }
+}
+
+html[data-prism-theme] :is(
+  [data-prism-composer="1"] > .GRgSLq_row button.GRgSLq_primary,
+  [data-dsh-composer="true"][data-prism-composer="1"] :is(#btn-composer-send, #btn-composer-stop)
+):disabled:not([data-sending]) {
+  background: var(--ag-cs-send-dis-bg);
+  color: var(--dsw-alias-label-tertiary);
+  opacity: 1;
+  box-shadow: none;
+}
+
+html[data-prism-theme] :is(
+  [data-prism-composer="1"] > .GRgSLq_row :is(button.GRgSLq_primary, button.GRgSLq_add),
+  [data-dsh-composer="true"][data-prism-composer="1"] :is(#btn-composer-send, #btn-composer-stop)
+):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Standalone preview supplies only SVG/square artwork for these buttons. */
+html[data-prism-theme] [data-dsh-composer="true"][data-prism-composer="1"] :is(#btn-composer-send, #btn-composer-stop):not([hidden]) {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+}
+html[data-prism-theme] [data-dsh-composer="true"][data-prism-composer="1"] #btn-composer-stop > .dsh-stop-square {
+  background: currentColor;
+}
+
+/* --------------------------------------------------------------------------
+ * 九、思考块与双语/沉浸式翻译覆层 (Thought Suite)
+ * -------------------------------------------------------------------------- */
+.dsh-thought-block,
+details.dsh-thought,
+[data-dsh-thought] {
+  margin: 6px 0 10px;
+  border-left: 1.5px solid var(--ag-cs-thought-rule);
+  padding: 2px 0 2px 12px;
+  color: var(--ag-cs-thought-fg);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.dsh-thought-trigger,
+[data-testid="thinking-collapsible-trigger"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: var(--ag-cs-r-sm);
+  border: none;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary, var(--muted-foreground));
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.dsh-thought-trigger:hover,
+[data-testid="thinking-collapsible-trigger"]:hover {
+  background: var(--ag-cs-whisper-hv);
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.ag-prism-thought-overlay {
+  display: block;
+  position: relative;
+}
+
+.ag-prism-thought-raw-toggle,
+.ag-prism-thought-retranslate-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 7px;
+  margin-left: 6px;
+  border-radius: 999px;
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  background: var(--ag-cs-pill-bg);
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.ag-prism-thought-raw-toggle:hover,
+.ag-prism-thought-retranslate-btn:hover {
+  background: var(--dsw-alias-interactive-bg-hover, var(--ag-cs-hover-wash));
+  border-color: var(--dsw-alias-border-l2, var(--ag-cs-border-2));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.ag-prism-thought-code {
+  font-family: var(--ag-cs-mono-stack);
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border-radius: var(--ag-cs-r-sm);
+  background: color-mix(in srgb, var(--foreground) 6.5%, transparent);
+  border: var(--ag-cs-hairline) solid var(--ag-cs-border-1);
+  color: var(--foreground);
+}
+
+.ag-cs-thinking-spark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--primary);
+  opacity: 0.88;
+}
+
+.ag-cs-thinking-spark[data-state="streaming"] {
+  animation: ag-cs-spark-orbit 2.4s ease-in-out infinite;
+}
+
+.ag-cs-thinking-spark[data-state="error"] {
+  color: var(--error);
+}
+
+/* --------------------------------------------------------------------------
+ * 十、微件与设置中心样式（层级避让 dsh-whale-widget 9999 与右侧 dsh-better-sidebar）
+ * -------------------------------------------------------------------------- */
+
+/* 10.1 动态上下文用量试管与遥测弹出卡片 */
+.dsh-vial-anchor,
+#ag-prism-pulse-bar,
+[data-dsh-vial] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 28;
+}
+
+.dsh-vial-trigger,
+.pv-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l2, var(--ag-cs-pill-border));
+  background: var(--ag-cs-pill-bg);
+  box-shadow: inset 0 1px 0 var(--ag-cs-specular);
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+  font-family: var(--ag-cs-mono-stack);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms var(--ag-ease-spring);
+}
+
+.dsh-vial-trigger:hover,
+.pv-chip:hover {
+  background: var(--dsw-alias-interactive-bg-hover, var(--ag-cs-hover-wash));
+  border-color: var(--dsw-alias-border-l4, var(--ag-cs-border-2));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.dsh-vial-popover,
+.pv-card {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  width: min(396px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: var(--ag-cs-r-lg);
+  background-color: var(--ag-cs-popover-bg);
+  background-image: var(--ag-cs-sheen);
+  backdrop-filter: blur(18px) saturate(145%);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l2, var(--ag-cs-border-2));
+  box-shadow: var(--ag-cs-surface-sh), 0 20px 44px -12px rgba(0, 0, 0, 0.52);
+  color: var(--dsw-alias-label-primary, var(--foreground));
+  z-index: 60;
+}
+
+.dsh-vial-popover[hidden],
+.pv-card[hidden] {
+  display: none !important;
+}
+
+.pv-rail,
+.dsh-vial-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pv-well,
+.dsh-vial-well {
+  padding: 6px;
+  border-radius: var(--ag-cs-r-md);
+  background: var(--ag-cs-console-well);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.28);
+}
+
+.pv-trk,
+.dsh-vial-slices-bar {
+  position: relative;
+  display: flex;
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--ag-cs-heat-empty);
+}
+
+.pv-seg,
+.dsh-vial-slice {
+  height: 100%;
+  transition: width 240ms var(--ag-ease-out), filter 120ms ease;
+}
+
+/* 10.2 推理强度星空滑块与 Orchestrator 切割水晶棱镜条 */
+.dsh-effort-slider,
+.ces-ag-effort-row,
+[data-testid="orchestrator-effort-bar"] {
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: var(--ag-cs-r-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, var(--card)) 82%, transparent);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  box-shadow: inset 0 1px 0 var(--ag-cs-specular);
+}
+
+.ag-cs-orch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+}
+
+.ag-cs-orch-value {
+  font-family: var(--ag-cs-mono-stack);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: linear-gradient(90deg, #E7EDF8 0%, #C8D6EE 52%, #AEBFD8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+html:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]) .ag-cs-orch-value {
+  background: linear-gradient(90deg, #1E3A8A 0%, #2563EB 52%, #6D28D9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.ag-cs-orch-track {
+  --orch-px: -9999px;
+  --orch-py: -9999px;
+  position: relative;
+  width: 100%;
+  height: 28px;
+  border-radius: 999px;
+  overflow: hidden;
+  cursor: pointer;
+  box-sizing: border-box;
+  background: radial-gradient(120% 140% at 50% 0%, rgba(28, 33, 46, 0.94) 0%, rgba(11, 13, 20, 0.98) 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.62), inset 0 0 0 1px rgba(212, 224, 248, 0.18), 0 1px 6px rgba(0, 0, 0, 0.34);
+}
+
+html:is([data-prism-theme="crystal"], [data-prism-theme="alabaster"], [data-ag-cs-theme="light"]) .ag-cs-orch-track {
+  background: linear-gradient(#E2E9F5 0%, #D3DDEC 100%);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.16), inset 0 0 0 1px rgba(30, 58, 138, 0.22), 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.ag-cs-orch-canvas,
+.ag-cs-orch-track > canvas:not(.ag-cs-prism-rim-cv) {
+  position: absolute;
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  border-radius: 999px;
+  display: block;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 10.3 鲸伴宠舞台由挂件及 deepseek-companions.css 布局。 */
+
+/* 10.4 左侧对话标尺与悬浮目录大纲 */
+.dsh-conv-rail,
+[data-testid="conversation-navigator"] {
+  pointer-events: auto;
+  position: relative;
+}
+
+:is([data-testid="conversation-navigator-turn"], [data-testid="conversation-navigator-group"], .dsh-rail-tick) > span {
+  border-radius: 999px;
+  background-color: var(--ag-cs-nav-dot);
+  opacity: 0.62;
+  transition: background-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease, transform 150ms var(--ag-ease-spring);
+}
+
+:is([data-testid="conversation-navigator-turn"], [data-testid="conversation-navigator-group"], .dsh-rail-tick):is(:hover, [aria-current="true"], [data-active="true"], .is-active) > span {
+  background-color: var(--ag-cs-nav-active);
+  opacity: 1;
+  box-shadow: var(--ag-cs-nav-glow);
+}
+
+.ag-cs-nav-outline-popover {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  width: 268px;
+  max-height: min(368px, calc(100vh - 80px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: var(--ag-cs-r-lg);
+  background-color: var(--ag-cs-popover-bg);
+  background-image: var(--ag-cs-sheen);
+  backdrop-filter: blur(16px) saturate(135%);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l2, var(--ag-cs-border-2));
+  box-shadow: var(--ag-cs-surface-sh);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.ag-cs-nav-outline-popover[hidden] {
+  display: none !important;
+}
+
+.ag-cs-nav-outline-search {
+  box-sizing: border-box;
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--ag-cs-r-sm);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  background: color-mix(in srgb, var(--background) 62%, var(--card));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+  font-size: 11.5px;
+  outline: none;
+}
+
+.ag-cs-nav-outline-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border: none;
+  border-radius: var(--ag-cs-r-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.ag-cs-nav-outline-item:hover {
+  background: var(--dsw-alias-interactive-bg-hover, var(--ag-cs-hover-wash));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.ag-cs-nav-outline-item[data-active="1"] {
+  background: var(--ag-cs-sidebar-selected);
+  color: var(--dsw-alias-label-primary, var(--foreground));
+  font-weight: 500;
+}
+
+/* 10.5 外观设置中心弹窗与 DSH 原生 settings.section 嵌入视图 */
+.dsh-prism-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--dsw-alias-bg-mask-1, var(--scrim));
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.dsh-prism-settings-backdrop[hidden] {
+  display: none !important;
+}
+
+.dsh-prism-settings-modal,
+#ag-cs-settings-sec {
+  box-sizing: border-box;
+  border-radius: var(--ag-cs-r-lg);
+  background-color: var(--ag-cs-panel-bg);
+  background-image: var(--ag-cs-sheen);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l2, var(--ag-cs-border-2));
+  box-shadow: var(--ag-cs-surface-sh), 0 24px 64px -16px rgba(0, 0, 0, 0.56);
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.dsh-prism-settings-modal {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(84vh, 760px);
+  overflow-y: auto;
+  padding: 16px 18px;
+}
+
+/* 嵌入 DSH 原生设置弹层 settings.section 内的紧凑无阴影模式 */
+.dsh-prism-settings-embedded {
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.ag-cs-preset-btn,
+.ag-cs-cfg-btn,
+.ag-cs-seg-btn {
+  appearance: none;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--ag-cs-r-sm);
+  border: var(--ag-cs-hairline) solid var(--dsw-alias-border-l1, var(--ag-cs-border-1));
+  background: var(--ag-cs-pill-bg);
+  color: var(--dsw-alias-label-secondary, var(--secondary-foreground));
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.ag-cs-preset-btn:hover,
+.ag-cs-cfg-btn:hover,
+.ag-cs-seg-btn:hover {
+  background: var(--dsw-alias-interactive-bg-hover, var(--ag-cs-hover-wash));
+  border-color: var(--dsw-alias-border-l2, var(--ag-cs-border-2));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+}
+
+.ag-cs-preset-btn[data-active="1"],
+.ag-cs-seg-btn[data-pressed="true"],
+.ag-cs-seg-btn[aria-pressed="true"] {
+  background: var(--dsw-alias-button-ghost-active-fill, color-mix(in srgb, var(--primary) 16%, var(--ag-cs-tab-active)));
+  border-color: var(--dsw-alias-button-ghost-active-border, color-mix(in srgb, var(--primary) 46%, var(--ag-cs-border-2)));
+  color: var(--dsw-alias-label-primary, var(--foreground));
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+ * 十一、零 DOM 五阶墨水淡入 (CSS Custom Highlight API ::highlight)
+ * -------------------------------------------------------------------------- */
+:root::highlight(ag-stream-f0) {
+  color: color-mix(in srgb, var(--dsw-alias-label-primary, var(--foreground, currentColor)) 18%, transparent);
+}
+
+:root::highlight(ag-stream-f1) {
+  color: color-mix(in srgb, var(--dsw-alias-label-primary, var(--foreground, currentColor)) 42%, transparent);
+}
+
+:root::highlight(ag-stream-f2) {
+  color: color-mix(in srgb, var(--dsw-alias-label-primary, var(--foreground, currentColor)) 66%, transparent);
+}
+
+:root::highlight(ag-stream-f3) {
+  color: color-mix(in srgb, var(--dsw-alias-label-primary, var(--foreground, currentColor)) 85%, transparent);
+}
+
+:root::highlight(ag-stream-f4) {
+  color: color-mix(in srgb, var(--dsw-alias-label-primary, var(--foreground, currentColor)) 94%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+ * 十二、四档物理动效体系 (off / subtle / standard / ultra) 与关键帧
+ * -------------------------------------------------------------------------- */
+html:is([data-prism-motion="standard"], [data-prism-motion="ultra"], [data-ag-cs-motion="standard"], [data-ag-cs-motion="ultra"], :not([data-prism-motion]):not([data-ag-cs-motion])) .ag-cs-stream-chunk {
+  animation: ag-cs-stream-chunk 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html:is([data-prism-motion="standard"], [data-prism-motion="ultra"], [data-ag-cs-motion="standard"], [data-ag-cs-motion="ultra"], :not([data-prism-motion]):not([data-ag-cs-motion])) .ag-cs-code-scan {
+  animation: ag-cs-code-scan 180ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+html:is([data-prism-motion="standard"], [data-prism-motion="ultra"], [data-ag-cs-motion="standard"], [data-ag-cs-motion="ultra"], :not([data-prism-motion]):not([data-ag-cs-motion])) [data-ag-cs-sonar="1"] {
+  border-radius: var(--ag-cs-r-md);
+  animation: ag-cs-sonar-pulse-toned 700ms ease-out forwards;
+}
+
+html:is([data-prism-motion="ultra"], [data-ag-cs-motion="ultra"], :not([data-prism-motion]):not([data-ag-cs-motion])) [data-ag-cs-caustic="1"] {
+  position: relative;
+}
+
+html:is([data-prism-motion="ultra"], [data-ag-cs-motion="ultra"], :not([data-prism-motion]):not([data-ag-cs-motion])) [data-ag-cs-caustic="1"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  background:
+    linear-gradient(90deg, transparent 0%, transparent 32%, rgba(140, 224, 255, 0.8) 46%, rgba(255, 255, 255, 0.96) 50%, rgba(251, 188, 4, 0.7) 55%, transparent 68%, transparent 100%) 114% 0 / 250% 1px no-repeat,
+    linear-gradient(115deg, transparent 0%, transparent 33%, rgba(66, 133, 244, 0.18) 40%, rgba(155, 114, 203, 0.2) 45%, rgba(255, 255, 255, 0.24) 49.5%, rgba(234, 67, 53, 0.16) 54%, rgba(251, 188, 4, 0.18) 59%, transparent 67%, transparent 100%) 114% 0 / 250% 100% no-repeat;
+  animation: ag-cs-caustic-sweep 880ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+html:is([data-prism-motion="off"], [data-ag-cs-motion="off"]) {
+  --ag-ease-spring: linear;
+  --ag-spring-sidebar: linear;
+}
+
+html:is([data-prism-motion="off"], [data-ag-cs-motion="off"]) :is(.ag-cs-smooth-caret, .ag-cs-thinking-spark, [data-ag-cs-sonar="1"], .ag-cs-stream-chunk, .ag-cs-code-scan) {
+  animation: none !important;
+}
+
+html:is([data-prism-motion="subtle"], [data-ag-cs-motion="subtle"]) {
+  --ag-ease-spring: ease-out;
+  --ag-spring-sidebar: ease-out;
+  --ag-ease-out: ease-out;
+}
+
+html[data-ag-cs-win-blur="1"] :is(.ag-cs-thinking-spark, .ag-cs-smooth-caret) {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-prism-motion="ultra"]):not([data-prism-motion="standard"]):not([data-ag-cs-motion="ultra"]):not([data-ag-cs-motion="standard"]) :is(.ag-cs-thinking-spark, [data-ag-cs-sonar="1"], .ag-cs-stream-chunk, .ag-cs-code-scan) {
+    animation: none !important;
+  }
+}
+
+@keyframes ag-cs-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ag-cs-caret-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes ag-cs-spark-orbit {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(0, -1.2px, 0) rotate(18deg) scale(1.14);
+    opacity: 1;
+  }
+}
+
+@keyframes ag-cs-caustic-sweep {
+  0% {
+    opacity: 0;
+    background-position: 114% 0, 114% 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  82% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0;
+    background-position: -14% 0, -14% 0;
+  }
+}
+
+@keyframes ag-cs-sonar-pulse-toned {
+  0% {
+    box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+  }
+  24% {
+    box-shadow: 0 0 0 1.25px var(--ag-cs-sonar-border), 0 0 20px -3px var(--ag-cs-sonar-glow);
+    background-color: var(--ag-cs-sonar-wash);
+  }
+  100% {
+    box-shadow: 0 0 0 1.25px transparent, 0 0 24px 0 transparent;
+    background-color: transparent;
+  }
+}
+
+@keyframes ag-cs-stream-chunk {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 2.5px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ag-cs-code-scan {
+  from {
+    opacity: 0;
+    transform: translate3d(-3px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}

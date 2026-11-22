@@ -1,0 +1,1211 @@
+/* Obsidian Prism for DeepSeek Harness · Home Studio + home ripple host
+ * Adapted from RMvdesi/obsidian-prism 1.0.7. GPL-3.0-only.
+ */
+
+/* --------------------------------------------------------------------------
+ * 1. Home-only mounting contract
+ * -------------------------------------------------------------------------- */
+
+[data-conversation-content]:not([data-content-phase="hero"]):not([data-content-phase="blank"])
+  > .dsh-prism-home-ripple-host,
+[data-conversation-content]:not([data-content-phase="hero"]):not([data-content-phase="blank"])
+  .dsh-prism-home-studio-seat {
+  display: none !important;
+}
+
+.dsh-prism-home-ripple-host {
+  --dsh-prism-home-ripple-alpha: 1;
+  --dsh-prism-home-ripple-opacity: 1;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+  contain: layout style paint;
+  opacity: var(--dsh-prism-home-ripple-opacity);
+}
+
+.dsh-prism-home-ripple-host::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: min(44%, 320px);
+  background:
+    radial-gradient(ellipse at 50% 104%, rgba(123, 168, 255, 0.18) 0%, rgba(102, 94, 220, 0.1) 34%, transparent 68%),
+    linear-gradient(90deg, transparent 4%, rgba(66, 133, 244, 0.08) 32%, rgba(155, 114, 203, 0.13) 58%, rgba(234, 67, 53, 0.07) 78%, transparent 96%);
+  filter: blur(16px);
+  opacity: 0.76;
+}
+
+.dsh-prism-home-ripple-host::after {
+  content: "";
+  position: absolute;
+  right: 4%;
+  bottom: 1px;
+  left: 4%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(66, 133, 244, 0.46) 20%,
+    rgba(155, 114, 203, 0.58) 48%,
+    rgba(234, 67, 53, 0.32) 72%,
+    rgba(251, 188, 4, 0.22) 86%,
+    transparent 100%
+  );
+  box-shadow: 0 0 14px rgba(138, 150, 255, 0.18);
+  opacity: 0.7;
+}
+
+[data-conversation-content]:has(> .dsh-prism-home-ripple-host)
+  > :not(.dsh-prism-home-ripple-host) {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-prism-theme="crystal"] .dsh-prism-home-ripple-host::before,
+html[data-prism-theme="alabaster"] .dsh-prism-home-ripple-host::before,
+body[data-prism-theme="crystal"] .dsh-prism-home-ripple-host::before,
+body[data-prism-theme="alabaster"] .dsh-prism-home-ripple-host::before {
+  background:
+    radial-gradient(ellipse at 50% 104%, rgba(73, 115, 210, 0.15) 0%, rgba(109, 88, 188, 0.075) 36%, transparent 70%),
+    linear-gradient(90deg, transparent 4%, rgba(37, 99, 235, 0.075) 30%, rgba(124, 58, 237, 0.095) 60%, rgba(217, 119, 6, 0.05) 82%, transparent 96%);
+  filter: blur(18px);
+}
+
+html[data-prism-theme="warm"] .dsh-prism-home-ripple-host::before,
+body[data-prism-theme="warm"] .dsh-prism-home-ripple-host::before {
+  background:
+    radial-gradient(ellipse at 50% 104%, rgba(224, 154, 113, 0.16) 0%, rgba(166, 104, 73, 0.075) 38%, transparent 70%),
+    linear-gradient(90deg, transparent 5%, rgba(217, 119, 87, 0.075) 32%, rgba(224, 160, 124, 0.11) 62%, transparent 96%);
+}
+
+html[data-prism-theme="alabaster"] .dsh-prism-home-ripple-host::before,
+body[data-prism-theme="alabaster"] .dsh-prism-home-ripple-host::before {
+  background:
+    radial-gradient(ellipse at 50% 104%, rgba(183, 96, 55, 0.13) 0%, rgba(126, 91, 52, 0.065) 40%, transparent 72%),
+    linear-gradient(90deg, transparent 5%, rgba(178, 91, 54, 0.065) 32%, rgba(152, 112, 63, 0.08) 62%, transparent 96%);
+}
+
+.dsh-prism-home-ripple-host[data-prism-home-ripple-state="parked"],
+.dsh-prism-home-ripple-host[data-prism-home-ripple-state="unavailable"] {
+  opacity: 0.36;
+}
+
+.dsh-prism-home-ripple-host[data-prism-home-ripple-state="unavailable"]::after {
+  opacity: 0.32;
+}
+
+/* --------------------------------------------------------------------------
+ * 2. Dashboard shell
+ * -------------------------------------------------------------------------- */
+
+.dsh-prism-home-studio-seat.ag-cs-home-panel-seat {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-self: center;
+  box-sizing: border-box;
+  width: min(620px, calc(100% - 28px));
+  max-width: 100%;
+  margin: 0 auto 10px;
+  padding: 0;
+  color-scheme: light dark;
+  pointer-events: auto;
+}
+
+.dsh-prism-home-studio-panel.ag-cs-home-panel {
+  --dps-ink: #f2f5ff;
+  --dps-muted: #a2acbf;
+  --dps-faint: #748095;
+  --dps-accent: #8ab4f8;
+  --dps-accent-2: #b79dff;
+  --dps-panel: rgba(10, 11, 16, 0.9);
+  --dps-panel-2: rgba(20, 23, 32, 0.9);
+  --dps-panel-3: rgba(255, 255, 255, 0.038);
+  --dps-border: rgba(255, 255, 255, 0.1);
+  --dps-border-strong: rgba(255, 255, 255, 0.17);
+  --dps-hover: rgba(255, 255, 255, 0.062);
+  --dps-active: rgba(138, 180, 248, 0.125);
+  --dps-active-border: rgba(138, 180, 248, 0.28);
+  --dps-heat-0: rgba(255, 255, 255, 0.045);
+  --dps-heat-1: rgba(86, 130, 205, 0.28);
+  --dps-heat-2: rgba(99, 143, 225, 0.45);
+  --dps-heat-3: rgba(118, 160, 244, 0.65);
+  --dps-heat-4: rgba(158, 184, 255, 0.82);
+  --dps-heat-5: #d8e7ff;
+  --dps-grid: rgba(255, 255, 255, 0.055);
+  --dps-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.38),
+    0 14px 32px -18px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --dps-sheen: linear-gradient(145deg, rgba(255, 255, 255, 0.052), transparent 38%, rgba(117, 140, 255, 0.038) 100%);
+  --dsh-prism-model-0: #78b7ff;
+  --dsh-prism-model-1: #b79cff;
+  --dsh-prism-model-2: #f2be6b;
+  --dsh-prism-model-3: #66d6c2;
+  --dsh-prism-model-4: #ff8a8a;
+  --dsh-prism-model-5: #8ea0ff;
+  --dsh-prism-model-6: #d9e2f2;
+  --dsh-prism-model-7: #a5b2c8;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(620px, 100%);
+  max-width: 100%;
+  max-height: min(438px, 47vh);
+  min-height: 0;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 0.5px solid var(--dps-border);
+  border-radius: 15px;
+  background-color: var(--dps-panel);
+  background-image: var(--dps-sheen);
+  box-shadow: var(--dps-shadow);
+  color: var(--dps-ink);
+  font-family: var(--font-sans, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1.35;
+  text-rendering: geometricPrecision;
+  backdrop-filter: blur(18px) saturate(1.07);
+  -webkit-backdrop-filter: blur(18px) saturate(1.07);
+  contain: layout style;
+  user-select: none;
+  animation: dsh-prism-home-panel-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .dsh-prism-home-studio-panel.ag-cs-home-panel {
+    background-color: color-mix(in srgb, var(--dps-panel) 96%, var(--dps-panel-2));
+  }
+}
+
+@keyframes dsh-prism-home-panel-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.994);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+html[data-prism-theme="warm"] .dsh-prism-home-studio-panel.ag-cs-home-panel,
+body[data-prism-theme="warm"] .dsh-prism-home-studio-panel.ag-cs-home-panel {
+  --dps-ink: #f7eee7;
+  --dps-muted: #beaea2;
+  --dps-faint: #8c7e74;
+  --dps-accent: #e3a27f;
+  --dps-accent-2: #d58d68;
+  --dps-panel: rgba(24, 21, 19, 0.91);
+  --dps-panel-2: rgba(38, 33, 29, 0.91);
+  --dps-panel-3: rgba(247, 238, 231, 0.042);
+  --dps-border: rgba(247, 238, 231, 0.11);
+  --dps-border-strong: rgba(247, 238, 231, 0.18);
+  --dps-hover: rgba(247, 238, 231, 0.066);
+  --dps-active: rgba(227, 162, 127, 0.135);
+  --dps-active-border: rgba(227, 162, 127, 0.31);
+  --dps-heat-0: rgba(247, 238, 231, 0.043);
+  --dps-heat-1: rgba(151, 98, 70, 0.3);
+  --dps-heat-2: rgba(185, 117, 81, 0.48);
+  --dps-heat-3: rgba(213, 141, 104, 0.66);
+  --dps-heat-4: rgba(235, 170, 135, 0.82);
+  --dps-heat-5: #ffe1cc;
+  --dps-grid: rgba(247, 238, 231, 0.052);
+  --dps-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.42),
+    0 15px 34px -19px rgba(0, 0, 0, 0.74),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  --dps-sheen: linear-gradient(145deg, rgba(255, 246, 238, 0.055), transparent 42%, rgba(211, 128, 86, 0.04) 100%);
+  --dsh-prism-model-0: #e8a17d;
+  --dsh-prism-model-1: #d88d6c;
+  --dsh-prism-model-2: #e5bd79;
+  --dsh-prism-model-3: #8fbfa3;
+  --dsh-prism-model-4: #d87d7a;
+  --dsh-prism-model-5: #b39acb;
+  --dsh-prism-model-6: #e7ddcf;
+  --dsh-prism-model-7: #a99a8e;
+}
+
+html[data-prism-theme="crystal"] .dsh-prism-home-studio-panel.ag-cs-home-panel,
+body[data-prism-theme="crystal"] .dsh-prism-home-studio-panel.ag-cs-home-panel {
+  --dps-ink: #12213a;
+  --dps-muted: #60738e;
+  --dps-faint: #8190a6;
+  --dps-accent: #3568df;
+  --dps-accent-2: #765bd0;
+  --dps-panel: rgba(248, 251, 255, 0.9);
+  --dps-panel-2: rgba(238, 245, 255, 0.92);
+  --dps-panel-3: rgba(31, 65, 123, 0.035);
+  --dps-border: rgba(27, 58, 111, 0.13);
+  --dps-border-strong: rgba(27, 58, 111, 0.2);
+  --dps-hover: rgba(38, 77, 142, 0.06);
+  --dps-active: rgba(53, 104, 223, 0.1);
+  --dps-active-border: rgba(53, 104, 223, 0.24);
+  --dps-heat-0: rgba(34, 69, 128, 0.065);
+  --dps-heat-1: rgba(76, 116, 196, 0.24);
+  --dps-heat-2: rgba(69, 111, 202, 0.4);
+  --dps-heat-3: rgba(59, 104, 208, 0.61);
+  --dps-heat-4: rgba(47, 95, 210, 0.8);
+  --dps-heat-5: #275bc7;
+  --dps-grid: rgba(27, 58, 111, 0.078);
+  --dps-shadow:
+    0 1px 1px rgba(27, 48, 82, 0.04),
+    0 18px 38px -22px rgba(35, 65, 120, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --dps-sheen: linear-gradient(145deg, rgba(255, 255, 255, 0.7), transparent 42%, rgba(71, 107, 217, 0.04) 100%);
+  --dsh-prism-model-0: #2f67d4;
+  --dsh-prism-model-1: #7a5dcc;
+  --dsh-prism-model-2: #c28217;
+  --dsh-prism-model-3: #158c7c;
+  --dsh-prism-model-4: #c44f59;
+  --dsh-prism-model-5: #506fc5;
+  --dsh-prism-model-6: #5f6d82;
+  --dsh-prism-model-7: #8b5ca1;
+}
+
+html[data-prism-theme="alabaster"] .dsh-prism-home-studio-panel.ag-cs-home-panel,
+body[data-prism-theme="alabaster"] .dsh-prism-home-studio-panel.ag-cs-home-panel {
+  --dps-ink: #2d251c;
+  --dps-muted: #756a5e;
+  --dps-faint: #978b7d;
+  --dps-accent: #b45d39;
+  --dps-accent-2: #8d6d43;
+  --dps-panel: rgba(255, 252, 246, 0.91);
+  --dps-panel-2: rgba(250, 244, 234, 0.93);
+  --dps-panel-3: rgba(82, 60, 36, 0.035);
+  --dps-border: rgba(82, 60, 36, 0.14);
+  --dps-border-strong: rgba(82, 60, 36, 0.21);
+  --dps-hover: rgba(91, 66, 39, 0.06);
+  --dps-active: rgba(180, 93, 57, 0.1);
+  --dps-active-border: rgba(180, 93, 57, 0.25);
+  --dps-heat-0: rgba(82, 60, 36, 0.06);
+  --dps-heat-1: rgba(170, 103, 66, 0.23);
+  --dps-heat-2: rgba(178, 96, 58, 0.39);
+  --dps-heat-3: rgba(184, 91, 52, 0.59);
+  --dps-heat-4: rgba(174, 80, 43, 0.79);
+  --dps-heat-5: #a14424;
+  --dps-grid: rgba(82, 60, 36, 0.075);
+  --dps-shadow:
+    0 1px 1px rgba(60, 42, 22, 0.04),
+    0 16px 34px -22px rgba(74, 52, 28, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  --dps-sheen: linear-gradient(145deg, rgba(255, 255, 255, 0.68), transparent 44%, rgba(178, 91, 54, 0.035) 100%);
+  --dsh-prism-model-0: #a64f2d;
+  --dsh-prism-model-1: #9b6a38;
+  --dsh-prism-model-2: #bd8620;
+  --dsh-prism-model-3: #507d5f;
+  --dsh-prism-model-4: #b6534e;
+  --dsh-prism-model-5: #76689a;
+  --dsh-prism-model-6: #61584e;
+  --dsh-prism-model-7: #8d7660;
+}
+
+.dsh-prism-home-studio-panel > :not(.ag-cs-orbital-backdrop) {
+  position: relative;
+  z-index: 1;
+}
+
+.ag-cs-orbital-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.ag-cs-orbital-backdrop svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ag-cs-orbital-backdrop ellipse {
+  fill: none;
+  stroke: var(--dps-grid);
+  stroke-width: 1;
+}
+
+.ag-cs-orbital-backdrop ellipse.is-dashed {
+  stroke: color-mix(in srgb, var(--dps-accent) 12%, transparent);
+}
+
+.ag-cs-orbital-backdrop path {
+  stroke: color-mix(in srgb, var(--dps-ink) 17%, transparent);
+  stroke-linecap: round;
+  stroke-width: 1;
+}
+
+.ag-cs-orbital-backdrop circle.is-cobalt {
+  fill: var(--dps-accent);
+}
+
+.ag-cs-orbital-backdrop circle.is-iris {
+  fill: var(--dps-accent-2);
+}
+
+.ag-cs-orbital-backdrop circle.is-amber {
+  fill: var(--dsh-prism-model-2);
+}
+
+/* --------------------------------------------------------------------------
+ * 3. Header, tabs and range controls
+ * -------------------------------------------------------------------------- */
+
+.ag-cs-home-panel-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  min-height: 50px;
+  padding: 11px 13px 9px;
+  border-bottom: 0.5px solid var(--dps-border);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--dps-panel) 94%, transparent), color-mix(in srgb, var(--dps-panel) 78%, transparent));
+  backdrop-filter: blur(12px);
+}
+
+.dsh-prism-home-brand {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.dsh-prism-home-brand-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 0.5px solid var(--dps-active-border);
+  border-radius: 8px;
+  background: var(--dps-active);
+  color: var(--dps-accent);
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--dps-accent) 9%, transparent);
+}
+
+html[data-ag-cs-logo-ink="accent"] :is(.WOwLGG_fish, .dsh-prism-home-brand-mark) {
+  color: var(--primary, var(--ag-prism-accent, #4285f4));
+}
+
+html[data-ag-cs-logo-ink="foreground"] :is(.WOwLGG_fish, .dsh-prism-home-brand-mark) {
+  color: var(--foreground, var(--dsw-alias-label-primary, currentColor));
+}
+
+.dsh-prism-home-brand-mark svg {
+  width: 17px;
+  height: 17px;
+}
+
+.dsh-prism-home-brand-labels {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dsh-prism-home-brand-title {
+  overflow: hidden;
+  color: var(--dps-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-prism-home-brand-sub {
+  overflow: hidden;
+  color: var(--dps-faint);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-cs-home-tabs,
+.ag-cs-home-ranges {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.ag-cs-home-tab,
+.ag-cs-home-range {
+  appearance: none;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dps-muted);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 17px;
+  cursor: pointer;
+  transition:
+    background-color 130ms ease,
+    border-color 130ms ease,
+    color 130ms ease;
+}
+
+.ag-cs-home-tab {
+  padding: 2px 8px;
+}
+
+.ag-cs-home-range {
+  padding: 1px 6px;
+  font-size: 9.5px;
+}
+
+.ag-cs-home-tab:hover:not([data-active]),
+.ag-cs-home-range:hover:not([data-active]) {
+  background: var(--dps-hover);
+  color: var(--dps-ink);
+}
+
+.ag-cs-home-tab[data-active],
+.ag-cs-home-range[data-active] {
+  border-color: var(--dps-active-border);
+  background: var(--dps-active);
+  color: var(--dps-ink);
+}
+
+.ag-cs-home-tab:focus-visible,
+.ag-cs-home-range:focus-visible {
+  outline: 1.5px solid var(--dps-accent);
+  outline-offset: 1px;
+}
+
+.dsh-prism-home-toolbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: 31px;
+  padding: 5px 13px 5px;
+  border-bottom: 0.5px solid var(--dps-border);
+  background: color-mix(in srgb, var(--dps-panel-2) 58%, transparent);
+}
+
+.dsh-prism-home-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  color: var(--dps-faint);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.dsh-prism-home-source {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dsh-prism-home-updated {
+  flex: none;
+  padding-left: 7px;
+  border-left: 0.5px solid var(--dps-border);
+  font-variant-numeric: tabular-nums;
+}
+
+.dsh-prism-home-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.dsh-prism-home-body::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.dsh-prism-home-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dsh-prism-home-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dps-ink) 16%, transparent);
+}
+
+.dsh-prism-home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 11px 13px 13px;
+}
+
+/* --------------------------------------------------------------------------
+ * 4. Overview cards and 7 × N heatmap
+ * -------------------------------------------------------------------------- */
+
+.ag-cs-home-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ag-cs-home-stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 0.5px solid var(--dps-border);
+  border-radius: 8px;
+  background: var(--dps-panel-3);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dps-ink) 3%, transparent);
+}
+
+.ag-cs-home-stat-label {
+  overflow: hidden;
+  color: var(--dps-muted);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-cs-home-stat-value {
+  overflow: hidden;
+  color: var(--dps-ink);
+  font-family: var(--ag-cs-mono-stack, "Cascadia Mono", "SFMono-Regular", Consolas, monospace);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.ag-cs-home-stat[data-stat="model"] .ag-cs-home-stat-value {
+  font-family: var(--font-sans, "Segoe UI Variable", "Segoe UI", system-ui, sans-serif);
+  font-size: 11.5px;
+  font-weight: 550;
+  letter-spacing: 0;
+}
+
+.ag-cs-home-stat-sub {
+  overflow: hidden;
+  color: var(--dps-faint);
+  font-size: 8.5px;
+  line-height: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-prism-home-section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dsh-prism-home-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dsh-prism-home-section-title {
+  color: var(--dps-ink);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.dsh-prism-home-section-sub {
+  overflow: hidden;
+  color: var(--dps-faint);
+  font-size: 8.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-cs-home-heat {
+  --dsh-prism-home-heat-columns: 13;
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(var(--dsh-prism-home-heat-columns), 11px);
+  grid-template-rows: repeat(7, 11px);
+  gap: 3px;
+  width: max-content;
+  max-width: 100%;
+  padding: 3px 2px 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  contain: layout style;
+}
+
+.ag-cs-home-heat::-webkit-scrollbar {
+  display: none;
+}
+
+.ag-cs-home-heat-cell {
+  position: relative;
+  display: block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--dps-heat-0);
+  transition:
+    background-color 160ms ease,
+    transform 120ms ease;
+}
+
+.ag-cs-home-heat-cell:not([data-empty]):not([data-level="0"]):hover {
+  z-index: 2;
+  transform: scale(1.18);
+}
+
+.ag-cs-home-heat-cell[data-level="1"] {
+  background: var(--dps-heat-1);
+}
+
+.ag-cs-home-heat-cell[data-level="2"] {
+  background: var(--dps-heat-2);
+}
+
+.ag-cs-home-heat-cell[data-level="3"] {
+  background: var(--dps-heat-3);
+}
+
+.ag-cs-home-heat-cell[data-level="4"] {
+  background: var(--dps-heat-4);
+}
+
+.ag-cs-home-heat-cell[data-level="5"] {
+  background: var(--dps-heat-5);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--dps-accent) 22%, transparent);
+}
+
+.ag-cs-home-heat-cell[data-empty="1"] {
+  visibility: hidden;
+}
+
+.ag-cs-home-heat-hint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  max-width: 248px;
+  padding: 3px 7px;
+  border: 0.5px solid var(--dps-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dps-ink) 94%, var(--dps-panel));
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
+  color: var(--dps-panel);
+  font-size: 9px;
+  line-height: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 90ms ease;
+}
+
+.ag-cs-home-heat-hint[data-shown="true"] {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+ * 5. Token trend
+ * -------------------------------------------------------------------------- */
+
+.ag-cs-home-chart {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  padding: 2px 2px 21px;
+}
+
+.ag-cs-home-chart-plot {
+  position: relative;
+  box-sizing: border-box;
+  height: 184px;
+  margin-left: 41px;
+  border-bottom: 0.5px solid var(--dps-border-strong);
+  background-image: linear-gradient(to top, var(--dps-grid) 0.5px, transparent 0.5px);
+  background-size: 100% 25%;
+}
+
+.ag-cs-home-chart-tick {
+  position: absolute;
+  left: -42px;
+  width: 35px;
+  transform: translateY(50%);
+  color: var(--dps-faint);
+  font-family: var(--ag-cs-mono-stack, "Cascadia Mono", Consolas, monospace);
+  font-size: 8px;
+  line-height: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ag-cs-home-chart-bars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.ag-cs-home-chart-col {
+  position: relative;
+  display: block;
+  flex: 1 1 0;
+  min-width: 1px;
+  overflow: visible;
+  border-radius: 2px 2px 0 0;
+  transform-origin: 50% 100%;
+}
+
+.ag-cs-home-chart-col::after {
+  content: attr(data-label);
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  color: var(--dps-faint);
+  font-size: 8px;
+  line-height: 11px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.ag-cs-home-chart-seg {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  border-radius: 2px 2px 0 0;
+  background: color-mix(in srgb, var(--dps-accent) 18%, transparent);
+}
+
+.ag-cs-home-chart-stack {
+  display: block;
+  width: 100%;
+  min-height: 0;
+}
+
+.ag-cs-home-chart-stack[data-color="0"] {
+  background: var(--dsh-prism-model-0);
+}
+
+.ag-cs-home-chart-stack[data-color="1"] {
+  background: var(--dsh-prism-model-1);
+}
+
+.ag-cs-home-chart-stack[data-color="2"] {
+  background: var(--dsh-prism-model-2);
+}
+
+.ag-cs-home-chart-stack[data-color="3"] {
+  background: var(--dsh-prism-model-3);
+}
+
+.ag-cs-home-chart-stack[data-color="4"] {
+  background: var(--dsh-prism-model-4);
+}
+
+.ag-cs-home-chart-stack[data-color="5"] {
+  background: var(--dsh-prism-model-5);
+}
+
+.ag-cs-home-chart-stack[data-color="6"] {
+  background: var(--dsh-prism-model-6);
+}
+
+.ag-cs-home-chart-stack[data-color="7"] {
+  background: var(--dsh-prism-model-7);
+}
+
+/* --------------------------------------------------------------------------
+ * 6. Model distribution
+ * -------------------------------------------------------------------------- */
+
+.dsh-prism-home-model-distribution {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 160px;
+}
+
+.dsh-prism-home-donut {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.5px var(--dps-border),
+    inset 0 0 30px color-mix(in srgb, #000 10%, transparent);
+}
+
+.dsh-prism-home-donut::before {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border: 0.5px solid var(--dps-border);
+  border-radius: 50%;
+  background: var(--dps-panel-2);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dps-ink) 5%, transparent);
+}
+
+.dsh-prism-home-donut-core {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 1px;
+  color: var(--dps-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dsh-prism-home-donut-core strong {
+  font-family: var(--ag-cs-mono-stack, "Cascadia Mono", Consolas, monospace);
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.dsh-prism-home-donut-core small {
+  color: var(--dps-faint);
+  font-size: 8px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ag-cs-home-models {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ag-cs-home-model {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto 42px;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.ag-cs-home-model-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.ag-cs-home-model-swatch[data-color="0"] {
+  background: var(--dsh-prism-model-0);
+}
+
+.ag-cs-home-model-swatch[data-color="1"] {
+  background: var(--dsh-prism-model-1);
+}
+
+.ag-cs-home-model-swatch[data-color="2"] {
+  background: var(--dsh-prism-model-2);
+}
+
+.ag-cs-home-model-swatch[data-color="3"] {
+  background: var(--dsh-prism-model-3);
+}
+
+.ag-cs-home-model-swatch[data-color="4"] {
+  background: var(--dsh-prism-model-4);
+}
+
+.ag-cs-home-model-swatch[data-color="5"] {
+  background: var(--dsh-prism-model-5);
+}
+
+.ag-cs-home-model-swatch[data-color="6"] {
+  background: var(--dsh-prism-model-6);
+}
+
+.ag-cs-home-model-swatch[data-color="7"] {
+  background: var(--dsh-prism-model-7);
+}
+
+.ag-cs-home-model-name {
+  overflow: hidden;
+  color: var(--dps-ink);
+  font-size: 10.5px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-cs-home-model-split {
+  color: var(--dps-muted);
+  font-family: var(--ag-cs-mono-stack, "Cascadia Mono", Consolas, monospace);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ag-cs-home-model-share {
+  color: var(--dps-faint);
+  font-family: var(--ag-cs-mono-stack, "Cascadia Mono", Consolas, monospace);
+  font-size: 9px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+ * 7. Empty state
+ * -------------------------------------------------------------------------- */
+
+.dsh-prism-home-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 154px;
+  padding: 22px 20px;
+  color: var(--dps-muted);
+  text-align: center;
+}
+
+.dsh-prism-home-empty-orb {
+  position: relative;
+  display: block;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 2px;
+  border: 0.5px solid var(--dps-active-border);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 37% 32%, color-mix(in srgb, var(--dps-accent) 58%, transparent), transparent 43%),
+    radial-gradient(circle at 64% 70%, color-mix(in srgb, var(--dps-accent-2) 38%, transparent), transparent 48%),
+    var(--dps-panel-3);
+  box-shadow:
+    inset 0 0 14px color-mix(in srgb, var(--dps-accent) 8%, transparent),
+    0 0 20px color-mix(in srgb, var(--dps-accent) 8%, transparent);
+}
+
+.dsh-prism-home-empty-orb::before,
+.dsh-prism-home-empty-orb::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: 48px;
+  height: 12px;
+  border: 0.5px solid var(--dps-border);
+  border-radius: 50%;
+  transform: translateY(-50%) rotate(-14deg);
+}
+
+.dsh-prism-home-empty-orb::after {
+  width: 42px;
+  transform: translate(-5px, -50%) rotate(58deg);
+}
+
+.dsh-prism-home-empty-title {
+  color: var(--dps-ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 15px;
+}
+
+.dsh-prism-home-empty-body {
+  max-width: 390px;
+  margin: 0;
+  color: var(--dps-faint);
+  font-size: 9.5px;
+  line-height: 15px;
+}
+
+/* --------------------------------------------------------------------------
+ * 8. Narrow layout and reduced motion
+ * -------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .dsh-prism-home-studio-seat.ag-cs-home-panel-seat {
+    width: calc(100% - 20px);
+    margin-bottom: 8px;
+  }
+
+  .dsh-prism-home-studio-panel.ag-cs-home-panel {
+    max-height: min(368px, 44vh);
+    border-radius: 13px;
+  }
+
+  .ag-cs-home-panel-head {
+    min-height: 46px;
+    padding: 9px 10px 7px;
+  }
+
+  .dsh-prism-home-brand-sub {
+    display: none;
+  }
+
+  .dsh-prism-home-brand-mark {
+    width: 23px;
+    height: 23px;
+  }
+
+  .ag-cs-home-tab {
+    padding-inline: 6px;
+  }
+
+  .dsh-prism-home-toolbar {
+    padding-inline: 10px;
+  }
+
+  .dsh-prism-home-source {
+    max-width: 148px;
+  }
+
+  .dsh-prism-home-view {
+    padding: 9px 10px 11px;
+  }
+
+  .ag-cs-home-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ag-cs-home-chart-plot {
+    height: 154px;
+    margin-left: 35px;
+  }
+
+  .ag-cs-home-chart-tick {
+    left: -36px;
+    width: 30px;
+  }
+
+  .dsh-prism-home-model-distribution {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .dsh-prism-home-donut {
+    width: 104px;
+    height: 104px;
+  }
+
+  .dsh-prism-home-donut::before {
+    inset: 19px;
+  }
+
+  .ag-cs-home-model {
+    grid-template-columns: 8px minmax(0, 1fr) 38px;
+  }
+
+  .ag-cs-home-model-split {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .dsh-prism-home-brand-labels {
+    display: none;
+  }
+
+  .dsh-prism-home-meta {
+    display: none;
+  }
+
+  .dsh-prism-home-toolbar {
+    justify-content: center;
+  }
+
+  .ag-cs-home-tabs {
+    gap: 0;
+  }
+
+  .ag-cs-home-tab {
+    font-size: 9.5px;
+  }
+
+  .dsh-prism-home-model-distribution {
+    grid-template-columns: 1fr;
+  }
+
+  .dsh-prism-home-donut {
+    width: 96px;
+    height: 96px;
+  }
+
+  .ag-cs-home-model {
+    grid-template-columns: 8px minmax(0, 1fr) auto 40px;
+  }
+
+  .ag-cs-home-model-split {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dsh-prism-home-studio-panel.ag-cs-home-panel {
+    animation: none;
+  }
+
+  .dsh-prism-home-studio-panel *,
+  .dsh-prism-home-ripple-host * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+html[data-prism-motion="off"] .dsh-prism-home-studio-panel.ag-cs-home-panel {
+  animation: none;
+}
+
+html[data-prism-motion="off"] .dsh-prism-home-studio-panel * {
+  transition: none !important;
+  animation: none !important;
+}
+
+html[data-prism-ambient="0"] .dsh-prism-home-ripple-host,
+html[data-ag-cs-ambient="0"] .dsh-prism-home-ripple-host {
+  visibility: hidden !important;
+}

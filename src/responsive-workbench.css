@@ -1,0 +1,366 @@
+/*!
+ * Obsidian Prism for DeepSeek Harness
+ * Responsive workbench: composer tiers, native scroll-to-bottom polish and sidebar fold.
+ */
+
+html[data-prism-responsive-workbench] {
+  --prism-rw-fg: var(--dsw-alias-label-primary, #e8edf7);
+  --prism-rw-fg-2: var(--dsw-alias-label-secondary, #aab5c8);
+  --prism-rw-fg-3: var(--dsw-alias-label-caption, #77839a);
+  --prism-rw-border: color-mix(in srgb, var(--dsw-alias-border-l2, #475063) 78%, transparent);
+  --prism-rw-border-hi: color-mix(in srgb, var(--dsw-alias-state-business-primary, #7c8cff) 48%, transparent);
+  --prism-rw-surface: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #161a23) 82%, transparent);
+  --prism-rw-surface-hi: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #202633) 88%, transparent);
+  --prism-rw-wash: color-mix(in srgb, var(--dsw-alias-state-business-primary, #7c8cff) 11%, transparent);
+  --prism-rw-specular: color-mix(in srgb, #fff 14%, transparent);
+  --prism-rw-shadow: 0 8px 24px -12px rgba(2, 6, 18, .74), 0 0 0 1px var(--prism-rw-border);
+  --prism-rw-ease: cubic-bezier(.2, .72, .18, 1);
+}
+
+html[data-prism-theme="obsidian"][data-prism-responsive-workbench] {
+  --prism-rw-fg: #edf1ff;
+  --prism-rw-fg-2: #aab5cf;
+  --prism-rw-fg-3: #7885a3;
+  --prism-rw-border: rgba(151, 166, 204, .22);
+  --prism-rw-border-hi: rgba(126, 144, 255, .5);
+  --prism-rw-surface: rgba(14, 18, 30, .9);
+  --prism-rw-surface-hi: rgba(25, 31, 49, .94);
+  --prism-rw-wash: rgba(114, 132, 255, .13);
+  --prism-rw-shadow: 0 10px 28px -14px rgba(0, 0, 0, .82), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+html[data-prism-theme="warm"][data-prism-responsive-workbench] {
+  --prism-rw-fg: #f3ece2;
+  --prism-rw-fg-2: #c6b9aa;
+  --prism-rw-fg-3: #968779;
+  --prism-rw-border: rgba(210, 190, 166, .23);
+  --prism-rw-border-hi: rgba(221, 156, 103, .52);
+  --prism-rw-surface: rgba(30, 24, 21, .91);
+  --prism-rw-surface-hi: rgba(43, 34, 29, .95);
+  --prism-rw-wash: rgba(218, 146, 93, .13);
+  --prism-rw-shadow: 0 10px 28px -14px rgba(13, 7, 3, .78), inset 0 1px 0 rgba(255, 240, 220, .08);
+}
+
+html[data-prism-theme="crystal"][data-prism-responsive-workbench] {
+  --prism-rw-fg: #1d293a;
+  --prism-rw-fg-2: #4e6078;
+  --prism-rw-fg-3: #75849a;
+  --prism-rw-border: rgba(74, 101, 135, .2);
+  --prism-rw-border-hi: rgba(75, 118, 220, .44);
+  --prism-rw-surface: rgba(247, 250, 255, .9);
+  --prism-rw-surface-hi: rgba(231, 239, 251, .94);
+  --prism-rw-wash: rgba(72, 116, 220, .1);
+  --prism-rw-specular: rgba(255, 255, 255, .72);
+  --prism-rw-shadow: 0 10px 28px -15px rgba(25, 52, 92, .35), inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+
+html[data-prism-theme="alabaster"][data-prism-responsive-workbench] {
+  --prism-rw-fg: #302b26;
+  --prism-rw-fg-2: #60584f;
+  --prism-rw-fg-3: #8a7f74;
+  --prism-rw-border: rgba(109, 91, 72, .19);
+  --prism-rw-border-hi: rgba(177, 126, 75, .42);
+  --prism-rw-surface: rgba(251, 248, 241, .92);
+  --prism-rw-surface-hi: rgba(240, 234, 224, .95);
+  --prism-rw-wash: rgba(174, 126, 78, .09);
+  --prism-rw-specular: rgba(255, 255, 255, .76);
+  --prism-rw-shadow: 0 10px 28px -15px rgba(78, 57, 35, .28), inset 0 1px 0 rgba(255, 255, 255, .82);
+}
+
+/* Composer tier contract:
+   0 is fully expanded; 1-4 remove text in priority order; 5 compacts geometry.
+   Every trigger remains mounted, clickable and named through its own aria-label. */
+[data-composer-card][data-prism-toolbar-tier] .GRgSLq_row {
+  min-width: 0;
+  transition:
+    gap 160ms var(--prism-rw-ease),
+    padding-inline 160ms var(--prism-rw-ease);
+}
+
+[data-composer-card][data-prism-toolbar-tier] .GRgSLq_tools,
+[data-composer-card][data-prism-toolbar-tier] .GRgSLq_modes,
+[data-composer-card][data-prism-toolbar-tier] .GRgSLq_trailing,
+[data-composer-card][data-prism-toolbar-tier] .GRgSLq_standardControls {
+  min-width: 0;
+  transition: gap 160ms var(--prism-rw-ease);
+}
+
+[data-prism-toolbar-copy] {
+  transition:
+    opacity 130ms ease,
+    max-width 180ms var(--prism-rw-ease),
+    margin 180ms var(--prism-rw-ease);
+}
+
+[data-prism-toolbar-model],
+[data-prism-plan-trigger] {
+  min-width: 0;
+  transition:
+    width 160ms var(--prism-rw-ease),
+    max-width 160ms var(--prism-rw-ease),
+    padding-inline 160ms var(--prism-rw-ease),
+    gap 160ms var(--prism-rw-ease);
+}
+
+[data-prism-toolbar-tier="1"] [data-prism-toolbar-copy="model"],
+[data-prism-toolbar-tier="2"] [data-prism-toolbar-copy="vial"],
+[data-prism-toolbar-tier="3"] [data-prism-toolbar-copy="plan"],
+[data-prism-toolbar-tier="4"] [data-prism-toolbar-copy="secondary"] {
+  display: none !important;
+}
+
+[data-prism-toolbar-tier="1"] [data-prism-toolbar-model] {
+  max-width: 62px;
+  padding-inline: 6px;
+}
+
+[data-prism-toolbar-tier="2"] [data-prism-toolbar-vial] > button {
+  width: 28px;
+  min-width: 28px;
+  padding-inline: 0;
+  justify-content: center;
+}
+
+[data-prism-toolbar-tier="3"] [data-prism-plan-trigger] {
+  width: 28px;
+  min-width: 28px;
+  padding-inline: 0;
+  gap: 0;
+  justify-content: center;
+  font-size: 0 !important;
+}
+
+[data-prism-toolbar-tier="3"] [data-prism-plan-trigger]::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 1.25px solid currentColor;
+  border-radius: 4px;
+  box-sizing: border-box;
+  opacity: .82;
+  background:
+    linear-gradient(currentColor, currentColor) 50% 5px / 6px 1px no-repeat,
+    linear-gradient(currentColor, currentColor) 50% 8px / 8px 1px no-repeat;
+}
+
+[data-prism-toolbar-tier="4"] [data-prism-secondary-controls] {
+  gap: 4px !important;
+}
+
+[data-prism-toolbar-tier="4"] [data-prism-secondary-controls] button {
+  padding-inline: 5px;
+}
+
+[data-prism-toolbar-tier="5"] .GRgSLq_row {
+  gap: 4px;
+  padding-inline: 6px;
+}
+
+[data-prism-toolbar-tier="5"] .GRgSLq_tools,
+[data-prism-toolbar-tier="5"] .GRgSLq_modes,
+[data-prism-toolbar-tier="5"] .GRgSLq_trailing,
+[data-prism-toolbar-tier="5"] .GRgSLq_standardControls {
+  gap: 4px !important;
+}
+
+[data-prism-toolbar-tier="5"] [data-prism-toolbar-model] {
+  width: 28px;
+  max-width: 28px;
+  padding-inline: 0;
+  gap: 0;
+  justify-content: center;
+}
+
+[data-prism-toolbar-tier="5"] [data-prism-toolbar-chevron] {
+  display: none !important;
+}
+
+[data-prism-toolbar-tier="5"] [data-prism-toolbar-vial],
+[data-prism-toolbar-tier="5"] [data-prism-plan-trigger] {
+  gap: 2px;
+}
+
+[data-prism-toolbar-tier="5"] [data-prism-toolbar-vial] > button,
+[data-prism-toolbar-tier="5"] [data-prism-plan-trigger] {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  min-height: 26px;
+}
+
+[data-prism-toolbar-tier="5"] [data-prism-toolbar-vial] .dsh-prism-gear-btn {
+  width: 26px;
+  height: 26px;
+}
+
+[data-prism-toolbar-tier="5"] [data-prism-secondary-controls] {
+  gap: 2px !important;
+}
+
+/* Sidebar navigation fold. The extra launcher is appended beside the native
+   navigation children; React-owned rows are only marked, never moved or wrapped. */
+[data-prism-nav-hidden="1"] {
+  display: none !important;
+}
+
+.dsh-prism-nav-more {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  margin: 2px 0 0;
+  padding: 5px 10px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: var(--dsw-radius-md, 9px);
+  background: transparent;
+  color: var(--prism-rw-fg-2);
+  font: inherit;
+  font-size: 13px;
+  line-height: 22px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    color 130ms ease,
+    background-color 130ms ease,
+    border-color 130ms ease;
+}
+
+.dsh-prism-nav-more-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsh-prism-nav-more svg {
+  flex: none;
+  transition: transform 180ms var(--prism-rw-ease);
+}
+
+.dsh-prism-nav-more[data-expanded="1"] svg {
+  transform: rotate(180deg);
+}
+
+.dsh-prism-nav-more:hover {
+  color: var(--prism-rw-fg);
+  background: var(--prism-rw-wash);
+  border-color: var(--prism-rw-border);
+}
+
+.dsh-prism-nav-more:focus-visible {
+  outline: 1px solid var(--prism-rw-border-hi);
+  outline-offset: -2px;
+}
+
+/* Native DSH bottom control: only decorate its material and motion, preserving
+   the host button, placement and event contract. */
+button[data-prism-scroll-bottom-native="1"] {
+  color: var(--prism-rw-fg-2) !important;
+  border: 1px solid var(--prism-rw-border) !important;
+  background:
+    linear-gradient(180deg, var(--prism-rw-specular), transparent 55%),
+    var(--prism-rw-surface) !important;
+  box-shadow: var(--prism-rw-shadow) !important;
+  backdrop-filter: blur(14px) saturate(135%);
+  transition:
+    color 130ms ease,
+    border-color 130ms ease,
+    background-color 130ms ease,
+    transform 180ms var(--prism-rw-ease) !important;
+}
+
+button[data-prism-scroll-bottom-native="1"]:hover {
+  color: var(--prism-rw-fg) !important;
+  border-color: var(--prism-rw-border-hi) !important;
+  transform: translateY(-1px);
+}
+
+button[data-prism-scroll-bottom-native="1"] svg {
+  transition: transform 180ms var(--prism-rw-ease);
+}
+
+button[data-prism-scroll-bottom-native="1"][data-prism-scrolling="1"] svg {
+  transform: translateY(2px);
+}
+
+.dsh-prism-scroll-bottom {
+  position: fixed;
+  right: var(--prism-rw-scroll-right, 20px);
+  bottom: var(--prism-rw-scroll-bottom, 142px);
+  z-index: 18;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  place-items: center;
+  box-sizing: border-box;
+  border: 1px solid var(--prism-rw-border);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, var(--prism-rw-specular), transparent 58%),
+    var(--prism-rw-surface);
+  color: var(--prism-rw-fg-2);
+  box-shadow: var(--prism-rw-shadow);
+  backdrop-filter: blur(14px) saturate(135%);
+  cursor: pointer;
+  transition:
+    opacity 140ms ease,
+    color 130ms ease,
+    border-color 130ms ease,
+    transform 180ms var(--prism-rw-ease);
+}
+
+.dsh-prism-scroll-bottom[hidden] {
+  display: none !important;
+}
+
+.dsh-prism-scroll-bottom:hover {
+  color: var(--prism-rw-fg);
+  border-color: var(--prism-rw-border-hi);
+  transform: translateY(-1px);
+}
+
+.dsh-prism-scroll-bottom[data-prism-scrolling="1"] svg {
+  transform: translateY(2px);
+}
+
+.dsh-prism-scroll-bottom:focus-visible {
+  outline: 1px solid var(--prism-rw-border-hi);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .dsh-prism-scroll-bottom {
+    right: var(--prism-rw-scroll-right, 12px);
+    bottom: var(--prism-rw-scroll-bottom, 136px);
+  }
+}
+
+html[data-ag-cs-motion="off"] [data-composer-card][data-prism-toolbar-tier],
+html[data-ag-cs-motion="off"] [data-composer-card][data-prism-toolbar-tier] *,
+html[data-prism-motion="off"] [data-composer-card][data-prism-toolbar-tier],
+html[data-prism-motion="off"] [data-composer-card][data-prism-toolbar-tier] *,
+html[data-ag-cs-motion="off"] .dsh-prism-nav-more,
+html[data-prism-motion="off"] .dsh-prism-nav-more,
+html[data-ag-cs-motion="off"] .dsh-prism-scroll-bottom,
+html[data-prism-motion="off"] .dsh-prism-scroll-bottom {
+  transition-duration: 0s !important;
+  animation-duration: 0s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-composer-card][data-prism-toolbar-tier],
+  [data-composer-card][data-prism-toolbar-tier] *,
+  .dsh-prism-nav-more,
+  .dsh-prism-nav-more *,
+  .dsh-prism-scroll-bottom,
+  .dsh-prism-scroll-bottom * {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}

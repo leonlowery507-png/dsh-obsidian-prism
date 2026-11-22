@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="zh-CN" data-prism-theme="obsidian" data-ag-cs-style="1" data-ag-cs-palette="obsidian" data-ag-cs-theme="dark" data-ag-cs-accent="follow" data-ag-cs-motion="ultra">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Obsidian Prism × DeepSeek Harness (dsh web) — Interactive Stage</title>
+  <!-- 加载编译后的 Obsidian Prism 光学样式表 -->
+  <link rel="stylesheet" href="../dist/dsh-prism.css" />
+  <style id="dsh-stage-host-layout">
+    :root {
+      --stage-sidebar-w: 268px;
+      --stage-font-sans: "Plus Jakarta Sans", "Noto Sans SC", "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --stage-font-mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--stage-font-sans);
+      background: var(--dsw-alias-bg-base, var(--background, #0B0B0E));
+      color: var(--dsw-alias-text-primary, var(--foreground, #F2F2F5));
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .dsh-shell {
+      display: grid;
+      grid-template-columns: var(--stage-sidebar-w) minmax(0, 1fr);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* DSH 侧边栏骨架 */
+    .dsh-sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-width: 0;
+      padding: 12px 10px;
+      gap: 10px;
+      background: var(--dsw-alias-bg-sidebar, var(--sidebar, #09090B));
+      border-right: 1px solid var(--dsw-alias-border-subtle, var(--border, rgba(255, 255, 255, 0.08)));
+      overflow-y: auto;
+      z-index: 2;
+    }
+
+    .dsh-brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px 8px;
+      gap: 8px;
+    }
+
+    .dsh-brand-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .dsh-brand-badge {
+      font-family: var(--stage-font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(102, 157, 246, 0.14);
+      color: var(--primary, #669DF6);
+      border: 1px solid rgba(102, 157, 246, 0.28);
+    }
+
+    .dsh-new-chat-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 34px;
+      padding: 0 11px;
+      border-radius: var(--ag-cs-r-md, 8px);
+      border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+      background: rgba(128, 138, 158, 0.06);
+      color: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .dsh-sidebar-search {
+      width: 100%;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: var(--ag-cs-r-sm, 6px);
+      border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+      background: rgba(128, 138, 158, 0.06);
+      color: inherit;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .dsh-nav-section-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted-foreground, #8A8A98);
+      padding: 6px 8px 2px;
+    }
+
+    .dsh-thread-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .dsh-sidebar-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px 7px 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 12.5px;
+      text-align: left;
+      cursor: pointer;
+      position: relative;
+      width: 100%;
+    }
+
+    .dsh-thread-time {
+      font-family: var(--stage-font-mono);
+      font-size: 10px;
+      color: var(--muted-foreground, #8A8A98);
+      flex-shrink: 0;
+    }
+
+    .dsh-sidebar-footer {
+      padding-top: 8px;
+      border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11.5px;
+      color: var(--muted-foreground, #8A8A98);
+    }
+
+    .dsh-endpoint-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--stage-font-mono);
+      font-size: 10.5px;
+    }
+
+    .dsh-endpoint-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+    }
+
+    /* 右侧主工作区 */
+    .dsh-main {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      min-width: 0;
+      position: relative;
+      background: var(--dsw-alias-bg-content, var(--content, #0E0E11));
+      overflow: hidden;
+    }
+
+    /* 顶部交互舞台调试控制条 */
+    .dsh-stage-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+      background: var(--ag-cs-panel-bg, rgba(16, 17, 22, 0.84));
+      backdrop-filter: blur(12px);
+      flex-wrap: wrap;
+      z-index: 18;
+    }
+
+    .dsh-toolbar-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .dsh-toolbar-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--muted-foreground, #8A8A98);
+      margin-right: 4px;
+    }
+
+    .dsh-stage-btn {
+      height: 25px;
+      padding: 0 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+      background: rgba(128, 138, 158, 0.07);
+      color: var(--foreground, #F2F2F5);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .dsh-stage-btn:hover {
+      background: rgba(128, 138, 158, 0.16);
+    }
+
+    .dsh-stage-btn[data-active="true"] {
+      background: rgba(102, 157, 246, 0.18);
+      border-color: var(--primary, #669DF6);
+      color: var(--primary, #8AB4F8);
+      font-weight: 600;
+    }
+
+    .dsh-stage-btn[data-tone="warn"][data-active="true"] {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: #F59E0B;
+      color: #FBBF24;
+    }
+
+    .dsh-stage-btn[data-tone="error"][data-active="true"] {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: #EF4444;
+      color: #F87171;
+    }
+
+    .dsh-stage-btn[data-tone="ok"][data-active="true"] {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: #10B981;
+      color: #34D399;
+    }
+
+    /* 对话区 + 左侧章节导航轨道 */
+    .dsh-chat-workspace {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .dsh-conv-rail {
+      position: absolute !important;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 16;
+      padding: 9px 6px;
+      border-radius: 999px;
+      background: var(--ag-cs-pill-bg, rgba(128, 138, 158, 0.08));
+      border: 1px solid var(--border, rgba(255, 255, 255, 0.09));
+      backdrop-filter: blur(8px);
+    }
+
+    .dsh-rail-tick {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .dsh-rail-tick > span {
+      width: 7px;
+      height: 7px;
+      display: block;
+    }
+
+    .dsh-rail-tick[data-active="true"] > span {
+      transform: scale(1.25);
+    }
+
+    .dsh-chat {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 24px 28px 36px 64px;
+      scroll-behavior: smooth;
+    }
+
+    .dsh-chat-column {
+      max-width: var(--ag-cs-col-max, 50rem);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .dsh-turn {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dsh-user-msg {
+      align-self: flex-end;
+      max-width: 84%;
+      padding: 11px 15px;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+
+    .dsh-assistant-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .dsh-assistant-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      color: var(--muted-foreground, #8A8A98);
+      flex-wrap: wrap;
+    }
+
+    .dsh-model-tag {
+      font-family: var(--stage-font-mono);
+      font-size: 11px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(102, 157, 246, 0.12);
+      color: var(--link, #8AB4F8);
+    }
+
+    .dsh-console-box {
+      padding: 10px 12px;
+      white-space: pre-wrap;
+    }
+
+    /* <think> 推理块 */
+    .dsh-thought-shell {
+      border-radius: var(--ag-cs-r-md, 10px);
+      border: 1px solid var(--border, rgba(255, 255, 255, 0.09));
+      background: rgba(128, 138, 158, 0.04);
+      padding: 9px 13px;
+    }
+
+    .dsh-thought-body {
+      margin-top: 8px;
+      padding-left: 12px;
+      border-left: 2px solid var(--ag-cs-thought-rule, rgba(92, 198, 252, 0.3));
+      color: var(--ag-cs-thought-fg, var(--muted-foreground, #A1A1AA));
+      font-size: 12.8px;
+      line-height: 1.65;
+    }
+
+    .dsh-thought-body p {
+      margin: 6px 0;
+    }
+
+    /* 60+ 行代码块容器 */
+    .dsh-code-card {
+      border-radius: var(--ag-cs-r-md, 10px);
+      border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+      background: var(--ag-cs-code-well, #0B0C10);
+      overflow: visible;
+    }
+
+    .dsh-code-card pre {
+      margin: 0;
+      padding: 12px 14px;
+      overflow-x: auto;
+      font-family: var(--ag-cs-mono-stack, var(--stage-font-mono));
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+
+    /* 待确认决策悬浮演示卡 */
+    .dsh-takeover-card {
+      padding: 12px 14px;
+      border-radius: var(--ag-cs-r-md, 10px);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12.5px;
+    }
+
+    .dsh-takeover-card[hidden] {
+      display: none;
+    }
+
+    /* 底部悬浮输入框停靠区 + 像素伴宠 + 512K 水试管 + 水晶推理滑块 */
+    .dsh-composer-region {
+      padding: 6px 24px 16px 64px;
+      position: relative;
+      z-index: 16;
+      background: linear-gradient(180deg, transparent 0%, var(--content, #0E0E11) 26%);
+    }
+
+    .dsh-composer-wrap {
+      max-width: var(--ag-cs-col-max, 50rem);
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .dsh-mascot-dock {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 8px;
+      min-height: 76px;
+    }
+
+    #dsh-mascot-mount {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+      height: 76px;
+    }
+
+    /* 覆写绝对偏移，使伴宠稳定座落于输入座舱顶边正上方且不遮挡按钮 */
+    #dsh-mascot-mount > .dsh-mascot-stage {
+      position: relative !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 76px !important;
+      margin-bottom: -4px;
+    }
+
+    .dsh-mascot-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding-bottom: 6px;
+      flex-shrink: 0;
+      z-index: 24;
+    }
+
+    .dsh-composer-editor {
+      width: 100%;
+      min-height: 44px;
+      max-height: 150px;
+      padding: 4px 6px;
+      overflow-y: auto;
+      outline: none;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--foreground, #F2F2F5);
+    }
+
+    .dsh-composer-editor:empty::before {
+      content: attr(data-placeholder);
+      color: var(--placeholder, #626270);
+      pointer-events: none;
+    }
+
+    .dsh-composer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+    }
+
+    .dsh-composer-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .dsh-composer-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dsh-stop-btn[hidden],
+    .dsh-send-btn[hidden] {
+      display: none !important;
+    }
+
+    .dsh-stop-square {
+      position: relative;
+      z-index: 2;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--ag-cs-cancel-stop, #F4F5F8);
+      box-shadow: var(--ag-cs-cancel-stop-sh, 0 0 6px rgba(255, 255, 255, 0.32));
+    }
+
+    .dsh-stage-status-chip {
+      font-family: var(--stage-font-mono);
+      font-size: 10.5px;
+      color: var(--muted-foreground, #8A8A98);
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(128, 138, 158, 0.08);
+    }
+
+    @media (max-width: 900px) {
+      .dsh-shell {
+        grid-template-columns: 1fr;
+      }
+      .dsh-sidebar {
+        display: none;
+      }
+      .dsh-chat, .dsh-composer-region {
+        padding-left: 46px;
+        padding-right: 14px;
+      }
+    }
+  </style>
+  <script>
+    // 首次访问交互舞台时默认开启深潜蓝鲸 与机器双语思考译文以便开箱即用演示
+    (function () {
+      try {
+        if (!localStorage.getItem('dsh_obsidian_prism_config')) {
+          window.__DSH_PRISM_BOOT_CONFIG__ = {
+            theme: 'obsidian',
+            accentTone: 'follow',
+            mascot: 'whale',
+            thoughtTranslate: 'machine',
+            thoughtView: 'bilingual'
+          };
+        }
+      } catch (_) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="dsh-shell" data-dsh-shell="true" data-testid="dsh-shell">
+    <!-- 左侧 DeepSeek Harness 会话侧栏 -->
+    <aside class="dsh-sidebar" data-dsh-sidebar="true" aria-label="DSH Workspace Sidebar">
+      <div class="dsh-brand-row">
+        <div class="dsh-brand-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" fill="currentColor" style="color: var(--primary, #669DF6);" />
+          </svg>
+          <span>DeepSeek Harness</span>
+        </div>
+        <span class="dsh-brand-badge">PRISM v1.0.4</span>
+      </div>
+
+      <button type="button" class="dsh-new-chat-btn" id="btn-new-thread">
+        <span>+ 新建对话线程</span>
+        <span class="dsh-thread-time">⌘K</span>
+      </button>
+
+      <input type="search" class="dsh-sidebar-search" id="dsh-sidebar-search" placeholder="搜索 DSH 会话或代码片段…" aria-label="Search sessions" />
+
+      <div class="dsh-nav-section-label">置顶工作区 · Cordis Plugin</div>
+      <div class="dsh-thread-list" id="dsh-thread-list">
+        <button type="button" class="dsh-sidebar-item" data-selected="true" data-turn-target="turn-1">
+          <span>Obsidian Prism 光学移植舞台</span>
+          <span class="dsh-thread-time">LIVE</span>
+        </button>
+        <button type="button" class="dsh-sidebar-item" data-selected="false" data-turn-target="turn-2">
+          <span>&lt;think&gt; 双模思考译文验证</span>
+          <span class="dsh-thread-time">2m</span>
+        </button>
+        <button type="button" class="dsh-sidebar-item" data-selected="false" data-turn-target="turn-3">
+          <span>64 行代码块吸顶与折叠</span>
+          <span class="dsh-thread-time">9m</span>
+        </button>
+        <button type="button" class="dsh-sidebar-item" data-selected="false" data-turn-target="turn-4">
+          <span>CSS.highlights 水墨流式吐字</span>
+          <span class="dsh-thread-time">18m</span>
+        </button>
+
+        <div class="dsh-nav-section-label">过去 7 天</div>
+        <button type="button" class="dsh-sidebar-item" data-selected="false" data-turn-target="turn-1">
+          <span>512K 浅水波上下文试管调试</span>
+          <span class="dsh-thread-time">昨天</span>
+        </button>
+        <button type="button" class="dsh-sidebar-item" data-selected="false" data-turn-target="turn-3">
+          <span>DeepSeek 鲸伴宠</span>
+          <span class="dsh-thread-time">3d</span>
+        </button>
+      </div>
+
+      <div class="dsh-sidebar-footer">
+        <span class="dsh-endpoint-pill">
+          <span class="dsh-endpoint-dot"></span>
+          <span>127.0.0.1:3080</span>
+        </span>
+        <button type="button" class="dsh-stage-btn" id="btn-sidebar-settings" title="打开 Obsidian Prism 外观设置中心">⚙ 设置</button>
+      </div>
+    </aside>
+
+    <!-- 右侧 DSH 主交互画布 -->
+    <main class="dsh-main" data-dsh-main="true" data-testid="dsh-main">
+      <!-- 顶部交互舞台控制条：4主题 / 5强调色 / 3态光晕 / 流式吐字 / 译文模式 / 设置面板 -->
+      <header class="dsh-stage-toolbar" data-testid="dsh-stage-toolbar">
+        <div class="dsh-toolbar-group" role="group" aria-label="4 主题切换">
+          <span class="dsh-toolbar-label">主题</span>
+          <button type="button" class="dsh-stage-btn" data-stage-theme="obsidian" data-active="true">深空黑曜 Obsidian</button>
+          <button type="button" class="dsh-stage-btn" data-stage-theme="warm">暖炭玄岩 Warm</button>
+          <button type="button" class="dsh-stage-btn" data-stage-theme="crystal">白昼冷晶 Crystal</button>
+          <button type="button" class="dsh-stage-btn" data-stage-theme="alabaster">暖白画册 Alabaster</button>
+        </div>
+
+        <div class="dsh-toolbar-group" role="group" aria-label="5 工业强调色">
+          <span class="dsh-toolbar-label">强调色</span>
+          <button type="button" class="dsh-stage-btn" data-stage-accent="follow" data-active="true">Follow</button>
+          <button type="button" class="dsh-stage-btn" data-stage-accent="cobalt">Cobalt</button>
+          <button type="button" class="dsh-stage-btn" data-stage-accent="iris">Iris</button>
+          <button type="button" class="dsh-stage-btn" data-stage-accent="amber">Amber</button>
+          <button type="button" class="dsh-stage-btn" data-stage-accent="mono">Mono</button>
+        </div>
+
+        <div class="dsh-toolbar-group" role="group" aria-label="3 态语义边缘光晕触发器">
+          <span class="dsh-toolbar-label">3 态光晕</span>
+          <button type="button" class="dsh-stage-btn" data-tone="warn" data-aura-trigger="decision" data-testid="btn-aura-decision">等待确认</button>
+          <button type="button" class="dsh-stage-btn" data-tone="error" data-aura-trigger="error" data-testid="btn-aura-error">异常中断</button>
+          <button type="button" class="dsh-stage-btn" data-tone="ok" data-aura-trigger="complete" data-testid="btn-aura-complete">后台完成</button>
+          <button type="button" class="dsh-stage-btn" data-aura-trigger="idle" data-testid="btn-aura-idle">归零休眠</button>
+        </div>
+
+        <div class="dsh-toolbar-group">
+          <button type="button" class="dsh-stage-btn" id="btn-demo-stream" data-testid="btn-demo-stream">▶ 实时流式水墨吐字</button>
+          <button type="button" class="dsh-stage-btn" id="btn-demo-thought-view" data-testid="btn-demo-thought-view">思考视图: 双语对照</button>
+          <button type="button" class="dsh-stage-btn" id="btn-demo-vial-crit" data-testid="btn-demo-vial-crit">试管水位: 46%</button>
+          <button type="button" class="dsh-stage-btn" id="btn-open-prism-settings" data-testid="btn-open-prism-settings">⚙ 外观设置 (Ctrl+Shift+P)</button>
+        </div>
+      </header>
+
+      <!-- 主对话与左侧章节导航轨道 -->
+      <div class="dsh-chat-workspace">
+        <nav class="dsh-conv-rail" data-testid="conversation-navigator" aria-label="对话章节导航轨道">
+          <button type="button" class="dsh-rail-tick" data-active="true" data-scroll-turn="turn-1" title="Turn 1 · 光学框架与纯浏览器桥接"><span></span></button>
+          <button type="button" class="dsh-rail-tick" data-active="false" data-scroll-turn="turn-2" title="Turn 2 · &lt;think&gt; 推理块双模译文"><span></span></button>
+          <button type="button" class="dsh-rail-tick" data-active="false" data-scroll-turn="turn-3" title="Turn 3 · 64 行代码块吸顶与折叠"><span></span></button>
+          <button type="button" class="dsh-rail-tick" data-active="false" data-scroll-turn="turn-4" title="Turn 4 · CSS.highlights 5 级水墨流式吐字"><span></span></button>
+        </nav>
+
+        <section class="dsh-chat" id="dsh-chat-scroll" data-testid="conversation-view" data-dsh-chat="true">
+          <div class="dsh-chat-column" id="dsh-chat-column">
+            <!-- Turn 1: 架构总览 + Console Well 终端槽 -->
+            <article class="dsh-turn" id="turn-1" data-dsh-turn="1" data-testid="conversation-turn">
+              <div class="dsh-user-msg dsh-user-bubble" data-role="user" data-testid="user-message-bubble">
+                请将 Obsidian Prism 的四套光学主题、会话上下文试管、星空推理滑块、DeepSeek 鲸伴宠与水墨流式淡入移植到 DeepSeek Harness (<code>dsh web</code>)，作为独立互动舞台运行。
+              </div>
+              <div class="dsh-assistant-msg dsh-assistant-message" data-role="assistant" data-dsh-role="assistant">
+                <div class="dsh-assistant-meta">
+                  <span class="dsh-model-tag">DeepSeek-R1 · Orchestrator</span>
+                  <span>Cordis Host Plugin · 0fps Idle Sleep</span>
+                  <span class="dsh-stage-status-chip" id="stage-runtime-status">Booting…</span>
+                </div>
+                <p>
+                  已完成 <strong>Obsidian Prism (黑曜棱镜)</strong> 到 <strong>DeepSeek Harness (dsh)</strong> 的完整移植：桌面端 CDP 守护进程已被纯浏览器桥接器 <code>window.__agPrismBridge</code> 与 Cordis 插件入口 <code>src/index.mjs</code> 替代，使用 <code>localStorage</code>（键名 <code>dsh_obsidian_prism_config</code>）与 <code>&lt;10ms</code> 单飞事件 <code>ag-prism:config</code> 实现零延迟跨组件同步。
+                </p>
+                <div class="console-well dsh-console-box">$ dsh plugin load dsh-obsidian-prism
+[cordis] registered themes: obsidian (#09090B/#0E0E11), warm (#10100F/#141413), crystal (#E8EEF6/#F4F7FB), alabaster (#EBE6DC/#F6F4EE)
+[bridge] pure-browser telemetry &amp; thought translator ready (0fps GPU idle sleep: 1200ms)</div>
+              </div>
+            </article>
+
+            <!-- Turn 2: <think> 推理块与双语/沉浸译文演示 -->
+            <article class="dsh-turn" id="turn-2" data-dsh-turn="2" data-testid="conversation-turn">
+              <div class="dsh-user-msg dsh-user-bubble" data-role="user" data-testid="user-message-bubble">
+                展示一个包含英文深度推理过程的 <code>&lt;think&gt;</code> 思维链块，验证双语对照与沉浸中文译文切换。
+              </div>
+              <div class="dsh-assistant-msg dsh-assistant-message" data-role="assistant" data-dsh-role="assistant">
+                <div class="dsh-assistant-meta">
+                  <span class="dsh-model-tag">DeepSeek-R1 · Thinking</span>
+                  <span>Thought Suite Translator · Immersive / Bilingual</span>
+                </div>
+
+                <div class="dsh-thought-shell" data-dsh-thought="true">
+                  <button type="button" class="dsh-thought-trigger" data-testid="thinking-collapsible-trigger" aria-expanded="true">
+                    <span class="ag-cs-thinking-spark" aria-hidden="true">✦</span>
+                    <span>深度思考过程 · Worked for 6.4s (Thought Block)</span>
+                  </button>
+                  <div class="dsh-thought-body" data-testid="worked-for-collapsible">
+                    <think data-dsh-think-raw="true">
+                      <p>1. First, align the token mapping between Antigravity optical CSS variables and DeepSeek Harness custom properties (--dsw-static-*, --dsw-alias-*, --ag-prism-*).</p>
+                      <p>2. Second, decouple the 24-node shallow-water 512K context vial from the desktop CDP daemon by estimating conversation token budgets and streaming deltas directly in the browser.</p>
+                      <p>3. Finally, ensure the 4-tier spring choreography and CSS.highlights 5-tier ink fade-in settle cleanly to 0fps GPU sleep after 1200ms of idle time.</p>
+                    </think>
+                  </div>
+                </div>
+
+                <p>
+                  上方 <code>&lt;think&gt;</code> 块支持「沉浸译文」「双语对照」与「原文」切换，同时可通过左侧轨道 <code>Alt+Up</code> / <code>Alt+Down</code> 快速在各轮对话间跳转定位。
+                </p>
+              </div>
+            </article>
+
+            <!-- Turn 3: 64 行代码块（演示吸顶头与 >=48 行手动折叠） -->
+            <article class="dsh-turn" id="turn-3" data-dsh-turn="3" data-testid="conversation-turn">
+              <div class="dsh-user-msg dsh-user-bubble" data-role="user" data-testid="user-message-bubble">
+                请输出一段超过 48 行的 TypeScript 核心桥接代码，用于测试代码块玻璃吸顶标题栏与手动折叠/展开（保持滚动锚点稳定）。
+              </div>
+              <div class="dsh-assistant-msg dsh-assistant-message" data-role="assistant" data-dsh-role="assistant">
+                <div class="dsh-assistant-meta">
+                  <span class="dsh-model-tag">DeepSeek-V3 · Code</span>
+                  <span>Sticky Glass Header · ≥48 Lines Fold Guard</span>
+                </div>
+                <div class="dsh-code-card">
+                  <pre><code class="language-typescript" data-lang="typescript">// dsh-prism-bridge.ts — DeepSeek Harness 浏览器桥接与 512K 上下文遥测估算 (64 lines)
+export interface PrismTelemetrySnapshot {
+  usedTokens: number;
+  maxTokens: number;
+  usedFraction: number;
+  ratios: [number, number, number];
+  tps: number;
+  ttftSeconds: number;
+  streaming: boolean;
+}
+
+export interface PrismConfig {
+  theme: 'obsidian' | 'warm' | 'crystal' | 'alabaster';
+  accentTone: 'follow' | 'cobalt' | 'iris' | 'amber' | 'mono';
+  motionLevel: 'off' | 'subtle' | 'standard' | 'ultra';
+  thoughtTranslate: 'off' | 'machine' | 'ai';
+  thoughtView: 'immersive' | 'bilingual';
+  mascot: 'whale' | 'orca' | 'off';
+}
+
+const DEFAULT_MAX_TOKENS = 512_000;
+const STORAGE_KEY = 'dsh_obsidian_prism_config';
+
+export function estimateCjkAwareTokens(text: string): number {
+  let cjkChars = 0;
+  let asciiChars = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+    if (code >= 0x4e00 && code <= 0x9fff) {
+      cjkChars += 1;
+    } else {
+      asciiChars += 1;
+    }
+  }
+  return Math.max(1, Math.ceil(cjkChars * 1.35 + asciiChars / 3.8));
+}
+
+export function collectConversationTelemetry(root: ParentNode, streaming: boolean): PrismTelemetrySnapshot {
+  const userNodes = Array.from(root.querySelectorAll('[data-role="user"]'));
+  const assistantNodes = Array.from(root.querySelectorAll('[data-role="assistant"]'));
+  const codeNodes = Array.from(root.querySelectorAll('pre code'));
+
+  const systemTokens = 14_200;
+  const convTokens = [...userNodes, ...assistantNodes].reduce(
+    (sum, node) => sum + estimateCjkAwareTokens(node.textContent || ''),
+    0,
+  );
+  const toolTokens = codeNodes.reduce(
+    (sum, node) => sum + estimateCjkAwareTokens(node.textContent || ''),
+    0,
+  );
+
+  const usedTokens = Math.min(DEFAULT_MAX_TOKENS, systemTokens + convTokens + toolTokens);
+  const usedFraction = usedTokens / DEFAULT_MAX_TOKENS;
+  const sum = Math.max(1, systemTokens + convTokens + toolTokens);
+
+  return {
+    usedTokens,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    usedFraction,
+    ratios: [
+      (systemTokens / sum) * usedFraction,
+      (convTokens / sum) * usedFraction,
+      (toolTokens / sum) * usedFraction,
+    ],
+    tps: streaming ? 78.4 : 0,
+    ttftSeconds: 0.42,
+    streaming,
+  };
+}</code></pre>
+                </div>
+              </div>
+            </article>
+
+            <!-- Turn 4: CSS.highlights 5 级水墨流式吐字演示 & 决策确认卡片 -->
+            <article class="dsh-turn" id="turn-4" data-dsh-turn="4" data-testid="conversation-turn">
+              <div class="dsh-user-msg dsh-user-bubble" data-role="user" data-testid="user-message-bubble">
+                点击顶部「实时流式水墨吐字」按钮，观察零 DOM 破坏的 <code>CSS.highlights</code> 五级水墨淡入（<code>ag-stream-f0..f4</code>）与水试管液滴溅射联动。
+              </div>
+              <div class="dsh-assistant-msg dsh-assistant-message" data-role="assistant" data-dsh-role="assistant">
+                <div class="dsh-assistant-meta">
+                  <span class="dsh-model-tag">DeepSeek-R1 · Velvet Ink Stream</span>
+                  <span id="stream-state-badge">IDLE · 0fps Sleep</span>
+                </div>
+
+                <div class="dsh-takeover-card" id="dsh-takeover-card" data-testid="interaction-takeover-card" hidden>
+                  <div>
+                    <strong>⚠ 等待用户决策 (Awaiting Decision)</strong>
+                    <div style="opacity: 0.85; font-size: 12px;">Cordis 插件请求应用「暖炭玄岩 Warm」与 120Hz 弹性光边到当前 DSH 会话。</div>
+                  </div>
+                  <button type="button" class="dsh-stage-btn" id="btn-dismiss-takeover">批准并消除光晕</button>
+                </div>
+
+                <div data-testid="planner-response-text" data-dsh-stream-target="true" id="stream-demo-target" class="dsh-assistant-prose">
+                  <p>
+                    当前处于静止待机态。点击上方 <strong>▶ 实时流式水墨吐字</strong> 按钮，系统将以 32ms 步进向此段落追加真实文本节点，激活 <code>CSS.highlights</code> 五级水墨透明度羽化、512K 试管液滴激波与运行态光学边缘光晕；吐字结束后 1.2 秒自动收敛至 <code>0fps</code> 零功耗休眠。
+                  </p>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <!-- 输入座舱和鲸伴宠 -->
+      <footer class="dsh-composer-region">
+        <div class="dsh-composer-wrap">
+          <!-- DeepSeek 鲸伴宠预览 -->
+          <div class="dsh-mascot-dock" data-dsh-mascot-dock="true" data-testid="mascot-dock">
+            <div id="dsh-mascot-mount" data-dsh-mascot-mount="true" data-dsh-mascot-slot="1"></div>
+            <div class="dsh-mascot-controls">
+              <button type="button" class="dsh-stage-btn" data-preview-companion="whale">深潜蓝鲸</button>
+              <button type="button" class="dsh-stage-btn" data-preview-companion="orca">星海虎鲸</button>
+              <button type="button" class="dsh-stage-btn" data-preview-companion="off">关闭伴宠</button>
+            </div>
+          </div>
+
+          <!-- 毛玻璃悬浮输入座舱 -->
+          <div class="dsh-composer surface-composer-card" data-testid="agent-input-box" data-dsh-composer="true">
+            <div
+              class="dsh-composer-editor"
+              id="dsh-composer-editor"
+              contenteditable="true"
+              role="textbox"
+              aria-multiline="true"
+              data-placeholder="向 DeepSeek Harness 提问，或输入 /compact、体验平滑物理光标与水墨流式吐字…"
+            ></div>
+
+            <div class="dsh-composer-bar" data-dsh-composer-actions="true">
+              <div class="dsh-composer-left">
+                <span class="dsh-stage-btn" data-preview-permission>完全权限</span>
+                <div id="ag-pulse-status-bar" data-dsh-vial="1" data-dsh-vial-mount="true" data-dsh-vial-slot="1" data-testid="vial-mount"></div>
+                <!-- 模型推理条预览 -->
+                <div id="dsh-effort-slider-mount" data-dsh-effort-slider="true" data-dsh-effort-slot="1" data-testid="effort-slider-mount"></div>
+              </div>
+
+              <div class="dsh-composer-right">
+
+                <button type="button" class="dsh-send-btn" id="btn-composer-send" data-testid="send-button" title="发送消息" aria-label="Send message">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 19V5"></path>
+                    <path d="m5 12 7-7 7 7"></path>
+                  </svg>
+                </button>
+                <button type="button" class="dsh-stop-btn" id="btn-composer-stop" data-testid="input-cancel-button" title="停止生成" aria-label="Stop generating" hidden>
+                  <span class="dsh-stop-square" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- 加载构建后的 Obsidian Prism 完整浏览器运行时 -->
+  <script src="../dist/dsh-prism.bundle.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var activeStreamCtrl = null;
+      var fallbackTimer = 0;
+      var critMode = false;
+
+      var STREAM_CHUNKS = [
+        '正在激活 Obsidian Prism v1.0.4 五级水墨流式引擎：',
+        '新抵达的字符范围被动态注册进 CSS.highlights 的 ag-stream-f0 至 ag-stream-f4 桶中，',
+        '全程零 extra <span> 包裹、零 DOM 树破坏。',
+        '与此同时，右下角 512K 高硼硅浅水波试管触发悬挂液滴跌落与 24 节点微浪共振，',
+        '星尘粒子随 82.4 tok/s 速率缓升，平滑物理光标以 180Hz 弹簧阻尼紧随选区基线。',
+        '当生成完成并静置 1200ms 后，所有画布与光晕循环自动退入 0fps 零功耗休眠态。'
+      ];
+
+      function getOptics() {
+        return (window.DSHPrismOptics && typeof window.DSHPrismOptics.getInstance === 'function'
+          ? window.DSHPrismOptics.getInstance()
+          : null) || (window.__dshObsidianPrism && window.__dshObsidianPrism.optics && window.__dshObsidianPrism.optics.getInstance && window.__dshObsidianPrism.optics.getInstance()) || null;
+      }
+
+      function syncToolbarFromConfig(cfg) {
+        if (!cfg || typeof cfg !== 'object') return;
+        var theme = cfg.theme || document.documentElement.getAttribute('data-prism-theme') || 'obsidian';
+        var accent = cfg.accentTone || document.documentElement.getAttribute('data-ag-cs-accent') || 'follow';
+        var thoughtView = cfg.thoughtView === 'immersive' ? 'immersive' : 'bilingual';
+
+        document.querySelectorAll('[data-stage-theme]').forEach(function (btn) {
+          btn.setAttribute('data-active', btn.getAttribute('data-stage-theme') === theme ? 'true' : 'false');
+        });
+        document.querySelectorAll('[data-stage-accent]').forEach(function (btn) {
+          btn.setAttribute('data-active', btn.getAttribute('data-stage-accent') === accent ? 'true' : 'false');
+        });
+        var thoughtBtn = document.getElementById('btn-demo-thought-view');
+        if (thoughtBtn) {
+          thoughtBtn.textContent = thoughtView === 'immersive' ? '思考视图: 沉浸译文' : '思考视图: 双语对照';
+        }
+        updateRuntimeStatusText();
+      }
+
+      function updateRuntimeStatusText() {
+        var chip = document.getElementById('stage-runtime-status');
+        if (!chip) return;
+        var status = window.__dshObsidianPrism && window.__dshObsidianPrism.getStatus
+          ? window.__dshObsidianPrism.getStatus()
+          : null;
+        if (status && status.booted) {
+          var cfg = status.config || {};
+          chip.textContent = 'Booted · ' + (cfg.theme || 'obsidian') + ' · ' + (cfg.motionLevel || 'ultra');
+        } else {
+          chip.textContent = 'Standalone Stage';
+        }
+      }
+
+      function applyStageTheme(themeId) {
+        var bridge = window.__agPrismBridge;
+        if (bridge && typeof bridge.setConfig === 'function') {
+          bridge.setConfig({ theme: themeId });
+        } else if (window.DSHPrismTokens && typeof window.DSHPrismTokens.applyTokensToDocument === 'function') {
+          window.DSHPrismTokens.applyTokensToDocument(document, { theme: themeId });
+        }
+      }
+
+      function applyStageAccent(accent) {
+        var bridge = window.__agPrismBridge;
+        if (bridge && typeof bridge.setConfig === 'function') {
+          bridge.setConfig({ accentTone: accent });
+        } else {
+          document.documentElement.setAttribute('data-ag-cs-accent', accent);
+          document.documentElement.setAttribute('data-prism-accent', accent);
+        }
+      }
+
+      function triggerRimAura(stateName) {
+        var takeoverCard = document.getElementById('dsh-takeover-card');
+        if (takeoverCard) {
+          takeoverCard.hidden = stateName !== 'decision';
+        }
+        document.querySelectorAll('[data-aura-trigger]').forEach(function (btn) {
+          btn.setAttribute('data-active', btn.getAttribute('data-aura-trigger') === stateName ? 'true' : 'false');
+        });
+        var optics = getOptics();
+        if (optics) {
+          if (stateName === 'decision') {
+            optics.triggerAwaitingDecision && optics.triggerAwaitingDecision(true);
+          } else if (stateName === 'error') {
+            optics.triggerAwaitingDecision && optics.triggerAwaitingDecision(false);
+            optics.triggerErrorHalted && optics.triggerErrorHalted();
+          } else if (stateName === 'complete') {
+            optics.triggerAwaitingDecision && optics.triggerAwaitingDecision(false);
+            optics.triggerLongTaskComplete && optics.triggerLongTaskComplete();
+          } else {
+            optics.triggerAwaitingDecision && optics.triggerAwaitingDecision(false);
+            optics.triggerIdle && optics.triggerIdle();
+          }
+        }
+      }
+
+      function stopActiveStream(markError) {
+        if (activeStreamCtrl && typeof activeStreamCtrl.stop === 'function') {
+          activeStreamCtrl.stop();
+          activeStreamCtrl = null;
+        }
+        if (fallbackTimer) {
+          clearInterval(fallbackTimer);
+          fallbackTimer = 0;
+        }
+        var sendBtn = document.getElementById('btn-composer-send');
+        var stopBtn = document.getElementById('btn-composer-stop');
+        var badge = document.getElementById('stream-state-badge');
+        if (sendBtn) sendBtn.hidden = false;
+        if (stopBtn) stopBtn.hidden = true;
+        if (badge) badge.textContent = markError ? 'ABORTED · Error Aura' : 'COMPLETE -> 0fps Sleep';
+        var bridge = window.__agPrismBridge;
+        if (bridge && typeof bridge.updateTelemetry === 'function') {
+          bridge.updateTelemetry({ streaming: false, tps: 0 });
+        }
+        triggerRimAura(markError ? 'error' : 'complete');
+      }
+
+      function toggleLiveStreamDemo(customText) {
+        var target = document.getElementById('stream-demo-target');
+        var sendBtn = document.getElementById('btn-composer-send');
+        var stopBtn = document.getElementById('btn-composer-stop');
+        var badge = document.getElementById('stream-state-badge');
+        if (!target) return;
+
+        if (activeStreamCtrl || fallbackTimer) {
+          stopActiveStream(true);
+          return;
+        }
+
+        if (sendBtn) sendBtn.hidden = true;
+        if (stopBtn) stopBtn.hidden = false;
+        if (badge) badge.textContent = 'STREAMING · CSS.highlights 5-tier';
+
+        while (target.firstChild) target.removeChild(target.firstChild);
+        var p = document.createElement('p');
+        target.appendChild(p);
+        var fullText = customText || STREAM_CHUNKS.join('');
+
+        var optics = getOptics();
+        var bridge = window.__agPrismBridge;
+        if (optics && typeof optics.triggerRunning === 'function') {
+          optics.triggerRunning(true);
+        }
+        if (bridge && typeof bridge.updateTelemetry === 'function') {
+          bridge.updateTelemetry({ streaming: true, tps: 82.4 });
+        }
+
+        if (optics && typeof optics.streamText === 'function') {
+          activeStreamCtrl = optics.streamText(p, fullText, {
+            chunkSize: 3,
+            intervalMs: 32,
+            onComplete: function () {
+              activeStreamCtrl = null;
+              stopActiveStream(false);
+            }
+          });
+          return;
+        }
+
+        // 兜底模拟流式吐字
+        var cursor = 0;
+        fallbackTimer = setInterval(function () {
+          cursor = Math.min(fullText.length, cursor + 3);
+          p.textContent = fullText.slice(0, cursor);
+          if (cursor >= fullText.length) {
+            stopActiveStream(false);
+          }
+        }, 32);
+      }
+
+      function bindStageControls() {
+        document.querySelectorAll('[data-stage-theme]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            applyStageTheme(btn.getAttribute('data-stage-theme'));
+          });
+        });
+
+        document.querySelectorAll('[data-stage-accent]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            applyStageAccent(btn.getAttribute('data-stage-accent'));
+          });
+        });
+
+        document.querySelectorAll('[data-aura-trigger]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            triggerRimAura(btn.getAttribute('data-aura-trigger'));
+          });
+        });
+
+        var dismissTakeover = document.getElementById('btn-dismiss-takeover');
+        if (dismissTakeover) {
+          dismissTakeover.addEventListener('click', function () {
+            triggerRimAura('idle');
+          });
+        }
+
+        var streamBtn = document.getElementById('btn-demo-stream');
+        if (streamBtn) {
+          streamBtn.addEventListener('click', function () {
+            document.getElementById('turn-4')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            toggleLiveStreamDemo();
+          });
+        }
+
+        var stopBtn = document.getElementById('btn-composer-stop');
+        if (stopBtn) {
+          stopBtn.addEventListener('click', function () {
+            stopActiveStream(true);
+          });
+        }
+
+        var sendBtn = document.getElementById('btn-composer-send');
+        var editorEl = document.getElementById('dsh-composer-editor');
+        if (sendBtn && editorEl) {
+          sendBtn.addEventListener('click', function () {
+            var draft = String(editorEl.textContent || '').trim();
+            editorEl.textContent = '';
+            document.getElementById('turn-4')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            toggleLiveStreamDemo(
+              draft
+                ? '已接收指令「' + draft + '」：' + STREAM_CHUNKS.join('')
+                : STREAM_CHUNKS.join('')
+            );
+          });
+        }
+
+        var thoughtBtn = document.getElementById('btn-demo-thought-view');
+        if (thoughtBtn) {
+          thoughtBtn.addEventListener('click', function () {
+            var bridge = window.__agPrismBridge;
+            var curView = bridge && bridge.getConfig ? bridge.getConfig().thoughtView : 'bilingual';
+            var nextView = curView === 'immersive' ? 'bilingual' : 'immersive';
+            if (bridge && typeof bridge.setConfig === 'function') {
+              bridge.setConfig({ thoughtTranslate: 'machine', thoughtView: nextView });
+            }
+            if (window.DSHPrismWorkbench && typeof window.DSHPrismWorkbench.setThoughtView === 'function') {
+              window.DSHPrismWorkbench.setThoughtView(nextView);
+            }
+            document.getElementById('turn-2')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+        }
+
+        var vialCritBtn = document.getElementById('btn-demo-vial-crit');
+        if (vialCritBtn) {
+          vialCritBtn.addEventListener('click', function () {
+            critMode = !critMode;
+            vialCritBtn.textContent = critMode ? '试管水位: 88% 警戒' : '试管水位: 46%';
+            vialCritBtn.setAttribute('data-active', critMode ? 'true' : 'false');
+            var payload = {
+              usedTokens: critMode ? 450560 : 235520,
+              maxTokens: 512000,
+              usedFraction: critMode ? 0.88 : 0.46,
+              systemTokens: critMode ? 42000 : 28400,
+              conversationTokens: critMode ? 284000 : 148000,
+              codeToolTokens: critMode ? 124560 : 59120,
+              streaming: critMode,
+              tps: critMode ? 84.2 : 0
+            };
+            if (window.__agPrismBridge && typeof window.__agPrismBridge.updateTelemetry === 'function') {
+              window.__agPrismBridge.updateTelemetry(payload);
+            }
+            if (window.DSHPrismWidgets && typeof window.DSHPrismWidgets.setVialTelemetry === 'function') {
+              window.DSHPrismWidgets.setVialTelemetry(payload);
+              window.DSHPrismWidgets.openVialPopover && window.DSHPrismWidgets.openVialPopover();
+            }
+          });
+        }
+
+        var openSettings = function () {
+          var wb = window.DSHPrismWorkbench;
+          if (wb && typeof wb.openSettings === 'function') {
+            wb.openSettings();
+          } else {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'P', ctrlKey: true, shiftKey: true, bubbles: true }));
+          }
+        };
+
+        ['btn-open-prism-settings', 'btn-sidebar-settings'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.addEventListener('click', openSettings);
+        });
+
+        document.querySelectorAll('[data-preview-companion]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            window.__agPrismBridge?.setConfig({ mascot: button.dataset.previewCompanion });
+          });
+        });
+
+        // 侧边栏与章节轨道点击定位
+        document.querySelectorAll('[data-scroll-turn], [data-turn-target]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var targetId = btn.getAttribute('data-scroll-turn') || btn.getAttribute('data-turn-target');
+            var turn = targetId ? document.getElementById(targetId) : null;
+            if (turn) turn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.querySelectorAll('.dsh-rail-tick').forEach(function (t) {
+              t.setAttribute('data-active', t.getAttribute('data-scroll-turn') === targetId ? 'true' : 'false');
+            });
+            if (btn.classList.contains('dsh-sidebar-item')) {
+              document.querySelectorAll('.dsh-sidebar-item').forEach(function (item) {
+                item.setAttribute('data-selected', item === btn ? 'true' : 'false');
+              });
+            }
+          });
+        });
+
+        // 思考折叠按钮交互
+        var thinkTrigger = document.querySelector('[data-testid="thinking-collapsible-trigger"]');
+        var thinkBody = document.querySelector('[data-testid="worked-for-collapsible"]');
+        if (thinkTrigger && thinkBody) {
+          thinkTrigger.addEventListener('click', function () {
+            var expanded = thinkTrigger.getAttribute('aria-expanded') !== 'false';
+            thinkTrigger.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            thinkBody.hidden = expanded;
+          });
+        }
+      }
+
+      window.addEventListener('ag-prism:config', function (ev) {
+        syncToolbarFromConfig(ev && ev.detail ? ev.detail : window.__agPrismBridge && window.__agPrismBridge.getConfig());
+      });
+
+      document.addEventListener('dsh-prism:ready', function () {
+        var cfg = window.__agPrismBridge && window.__agPrismBridge.getConfig ? window.__agPrismBridge.getConfig() : null;
+        syncToolbarFromConfig(cfg);
+      });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          bindStageControls();
+          syncToolbarFromConfig(window.__agPrismBridge && window.__agPrismBridge.getConfig ? window.__agPrismBridge.getConfig() : null);
+        });
+      } else {
+        bindStageControls();
+        syncToolbarFromConfig(window.__agPrismBridge && window.__agPrismBridge.getConfig ? window.__agPrismBridge.getConfig() : null);
+      }
+    })();
+  </script>
+</body>
+</html>

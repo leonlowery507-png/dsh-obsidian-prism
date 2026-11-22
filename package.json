@@ -1,0 +1,83 @@
+{
+  "name": "dsh-obsidian-prism",
+  "version": "1.0.7-beta.1-dsh.1",
+  "description": "Obsidian Prism (黑曜棱镜) for DeepSeek Harness (dsh) — 四套深浅光学配色、会话上下文试管、星空推理滑块、可拖拽自主巡逻的 DeepSeek 像素鲸母子与 Prism 对话气泡、五级水墨流式淡入与双模思考转译套件",
+  "license": "GPL-3.0-only",
+  "author": "RMvdesi (Upstream Obsidian Prism) & DSH Port Contributors",
+  "private": false,
+  "type": "module",
+  "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./plugin": "./src/index.mjs",
+    "./tokens": "./src/tokens-palettes.js",
+    "./bridge": "./src/dsh-bridge.js",
+    "./style.css": "./dist/dsh-prism.css",
+    "./bundle": "./dist/dsh-prism.bundle.js",
+    "./userscript": "./dist/dsh-prism.userscript.js"
+  },
+  "bin": {
+    "dsh-obsidian-prism": "./src/index.mjs"
+  },
+  "files": [
+    "lib",
+    "src",
+    "dist",
+    "preview",
+    "scripts",
+    "cordis.patch.yml",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "react": "^18.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leonlowery507-png/dsh-obsidian-prism.git"
+  },
+  "homepage": "https://github.com/leonlowery507-png/dsh-obsidian-prism#readme",
+  "bugs": {
+    "url": "https://github.com/leonlowery507-png/dsh-obsidian-prism/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "obsidian-prism",
+    "theme",
+    "optical-ui",
+    "spring-motion",
+    "telemetry-vial",
+    "thought-translator",
+    "pixel-companions"
+  ],
+  "scripts": {
+    "build": "node scripts/build-bundle.mjs",
+    "test": "node --test test/verify.test.mjs",
+    "verify": "node scripts/build-bundle.mjs && node --test test/verify.test.mjs",
+    "inject": "node src/index.mjs --inject",
+    "themes": "node src/index.mjs --themes"
+  }
+}
