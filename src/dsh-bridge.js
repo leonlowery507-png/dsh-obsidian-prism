@@ -22,7 +22,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this, function (G) {
   'use strict';
 
-  const VERSION = '1.0.7-beta.1-dsh.5';
+  const VERSION = '1.0.7-beta.1-dsh.6';
   const STORAGE_KEY = 'dsh_obsidian_prism_config';
   const LEGACY_PRISM_STORAGE_KEY = 'ag-prism:config';
   const LEGACY_V3_STORAGE_KEY = 'agClaudeStyle.settings.v3';

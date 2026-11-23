@@ -1215,6 +1215,7 @@ textarea[data-ag-cs-smooth-caret="1"] {
   transition: transform 55ms cubic-bezier(0.22, 1, 0.36, 1), opacity 70ms ease;
 }
 
+#dsh-obsidian-prism-optics-layer .ag-cs-smooth-caret[data-ag-cs-caret-visible="1"],
 .ag-cs-smooth-caret[data-ag-cs-caret-visible="1"] {
   opacity: 1;
   visibility: visible;
@@ -1222,6 +1223,7 @@ textarea[data-ag-cs-smooth-caret="1"] {
   animation: ag-cs-caret-blink 1.05s step-end infinite;
 }
 
+#dsh-obsidian-prism-optics-layer .ag-cs-smooth-caret[data-ag-cs-caret-visible="1"][data-ag-cs-caret-typing="1"],
 .ag-cs-smooth-caret[data-ag-cs-caret-visible="1"][data-ag-cs-caret-typing="1"] {
   animation: none;
   opacity: 1;

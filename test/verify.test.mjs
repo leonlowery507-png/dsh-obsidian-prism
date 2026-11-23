@@ -3274,3 +3274,56 @@ test('41. 像素小宠在舞台重挂后自动恢复循环，且原地待机时�
   env.tick(600);
   assert.equal(owner.style.transform, reducedTransform, '降级动效下待机位置必须保持静止');
 });
+
+test('42. 丝滑物理光标可见性不被光学层 ID 选择器压死，空编辑器聚焦即可见竖条', t => {
+  const css = readText('src/prism-style.css');
+  assert.match(
+    css,
+    /#dsh-obsidian-prism-optics-layer\s+\.ag-cs-smooth-caret\[data-ag-cs-caret-visible="1"\]/,
+    '可见状态规则必须带有 #dsh-obsidian-prism-optics-layer 前缀，否则会被默认 opacity:0 规则压死导致输入框无竖条'
+  );
+  assert.match(
+    css,
+    /#dsh-obsidian-prism-optics-layer\s+\.ag-cs-smooth-caret\[data-ag-cs-caret-visible="1"\]\[data-ag-cs-caret-typing="1"\]/,
+    '打字态规则必须带有同等或更高特异性'
+  );
+
+  const env = createMockBrowserEnv(), { doc } = env;
+  loadBrowserModule(env, 'src/optics-motion.js');
+  const optics = env.sandbox.DSHPrismOptics;
+  const bridge = createModuleBridge({ theme: 'crystal', motionLevel: 'ultra', smoothCaret: true });
+  const ctrl = optics.init(bridge);
+  t.after(() => optics.destroy());
+
+  // 模拟 DSH 空 DraftEditor（padding 为 0 且初始 Selection rangeCount === 0）
+  const editor = add(doc.body, 'div', { contenteditable: 'true' });
+  editor.isContentEditable = true;
+  editor.getBoundingClientRect = () => ({ left: 420, top: 840, width: 520, height: 24, right: 940, bottom: 864 });
+  const block = add(editor, 'div', { 'data-block': 'true' });
+  block.getBoundingClientRect = () => ({ left: 420, top: 842, width: 520, height: 20, right: 940, bottom: 862 });
+  env.sandbox.getComputedStyle = () => ({
+    display: 'block',
+    visibility: 'visible',
+    opacity: '1',
+    paddingLeft: '0px',
+    paddingTop: '0px',
+    fontSize: '14px',
+    lineHeight: '20px',
+  });
+  doc.activeElement = editor;
+  doc.getSelection = () => ({ rangeCount: 0 });
+
+  ctrl.smoothCaret.sync(false);
+  const portal = doc.getElementById(optics.PORTAL_ID);
+  const caret = portal?.querySelector('.ag-cs-smooth-caret');
+  assert.ok(caret, '聚焦输入框后应在光学层创建 .ag-cs-smooth-caret 竖条');
+  assert.equal(caret.getAttribute('data-ag-cs-caret-visible'), '1', '空编辑器聚焦时竖条必须立即标记可见');
+  assert.equal(editor.getAttribute('data-ag-cs-smooth-caret'), '1', '启用平滑光标时应接管原生光标');
+  assert.equal(caret.style.transform, 'translate3d(420px, 843px, 0)', 'padding 为 0 时不得错误偏移 6px');
+
+  // 关闭 smoothCaret 后必须立即隐藏自定义竖条并恢复原生 caret-color
+  bridge.setConfig({ smoothCaret: false });
+  env.tick(50);
+  assert.equal(caret.hasAttribute('data-ag-cs-caret-visible'), false, '关闭开关后应隐藏自定义竖条');
+  assert.equal(editor.hasAttribute('data-ag-cs-smooth-caret'), false, '关闭开关后应恢复原生光标');
+});

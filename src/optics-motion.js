@@ -2452,23 +2452,107 @@ void main() {
     }
 
     function measureContentEditable(ed) {
-      const sel = docOf()?.getSelection?.();
-      if (!sel || sel.rangeCount === 0) return null;
-      const range = sel.getRangeAt(0);
-      if (!range.collapsed || !ed.contains(range.startContainer)) return { collapsed: false };
-      const rects = range.getClientRects?.();
-      const r0 = rects?.length ? rects[rects.length - 1] : range.getBoundingClientRect?.();
-      if (r0 && r0.height > 0 && (r0.left > 0 || r0.top > 0)) {
-        return { collapsed: true, left: r0.left, top: r0.top, height: r0.height };
-      }
       const edRect = ed.getBoundingClientRect();
       const cs = winOf()?.getComputedStyle?.(ed);
-      return {
-        collapsed: true,
-        left: edRect.left + (parseFloat(cs?.paddingLeft || '6') || 6),
-        top: edRect.top + (parseFloat(cs?.paddingTop || '6') || 6),
-        height: Math.max(16, parseFloat(cs?.fontSize || '14') * 1.3),
+      const rawPadL = parseFloat(cs?.paddingLeft);
+      const rawPadT = parseFloat(cs?.paddingTop);
+      const padL = Number.isFinite(rawPadL) ? rawPadL : 0;
+      const padT = Number.isFinite(rawPadT) ? rawPadT : 0;
+      const rawFont = parseFloat(cs?.fontSize);
+      const fontSize = Number.isFinite(rawFont) && rawFont > 0 ? rawFont : 14;
+      const rawLineH = parseFloat(cs?.lineHeight);
+      const lineH = Number.isFinite(rawLineH) && rawLineH > 0 ? rawLineH : fontSize * 1.45;
+      const estGlyphH = Math.max(16, Math.min(24, Math.round(fontSize * 1.28)));
+      const estEmptyTopOffset = padT + Math.max(0, Math.round((Math.max(16, Math.min(28, lineH)) - estGlyphH) / 2));
+
+      const checkScrollBounds = (box) => {
+        if (!box || !box.collapsed) return box;
+        if ((ed.scrollHeight || 0) > (ed.clientHeight || 0) + 2 && edRect.height > 0) {
+          if (box.top < edRect.top - 4 || box.top + box.height > edRect.bottom + 6) {
+            return { collapsed: false };
+          }
+        }
+        return box;
       };
+
+      const sel = docOf()?.getSelection?.();
+      if (sel && sel.rangeCount > 0) {
+        const range = typeof sel.getRangeAt === 'function' ? sel.getRangeAt(0) : null;
+        const isCol = range && typeof range.collapsed === 'boolean' ? range.collapsed : Boolean(sel.isCollapsed);
+        if (!isCol) return { collapsed: false };
+        if (range && ed.contains?.(range.startContainer)) {
+          const rects = range.getClientRects?.();
+          const r0 = rects?.length ? rects[rects.length - 1] : range.getBoundingClientRect?.();
+          if (r0 && r0.height > 0 && (r0.left > 0 || r0.top > 0)) {
+            return checkScrollBounds({ collapsed: true, left: r0.left, top: r0.top, height: r0.height });
+          }
+
+          // 空行或 DraftEditor/Lexical 占位 <br> 节点精准回退
+          const sc = range.startContainer;
+          const so = range.startOffset;
+          if (sc?.nodeName === 'BR' && typeof sc.getBoundingClientRect === 'function') {
+            const brRect = sc.getBoundingClientRect();
+            if (brRect && brRect.height > 0 && (brRect.left > 0 || brRect.top > 0)) {
+              return checkScrollBounds({ collapsed: true, left: brRect.left, top: brRect.top, height: brRect.height });
+            }
+          }
+          if (sc && sc.nodeType === 1) {
+            const childAt = sc.childNodes?.[so];
+            if (childAt?.nodeName === 'BR' && typeof childAt.getBoundingClientRect === 'function') {
+              const brRect = childAt.getBoundingClientRect();
+              if (brRect && brRect.height > 0 && (brRect.left > 0 || brRect.top > 0)) {
+                return checkScrollBounds({ collapsed: true, left: brRect.left, top: brRect.top, height: brRect.height });
+              }
+            }
+            const childPrev = so > 0 ? sc.childNodes?.[so - 1] : null;
+            if (childPrev?.nodeName === 'BR' && typeof childPrev.getBoundingClientRect === 'function') {
+              const brRect = childPrev.getBoundingClientRect();
+              if (brRect && brRect.height > 0 && (brRect.left > 0 || brRect.top > 0)) {
+                const isManagedEmptyLine =
+                  Boolean(childPrev.hasAttribute?.('data-lexical-managed-linebreak')) ||
+                  sc.childNodes.length === 1;
+                const scRect = typeof sc.getBoundingClientRect === 'function' ? sc.getBoundingClientRect() : null;
+                const lineLeft = scRect && scRect.left > 0 ? scRect.left : brRect.left;
+                const lineTop = isManagedEmptyLine ? brRect.top : brRect.bottom;
+                return checkScrollBounds({ collapsed: true, left: lineLeft, top: lineTop, height: brRect.height });
+              }
+            }
+            if (sc !== ed && typeof sc.getBoundingClientRect === 'function') {
+              const scRect = sc.getBoundingClientRect();
+              if (scRect && (scRect.left > 0 || scRect.top > 0)) {
+                return checkScrollBounds({
+                  collapsed: true,
+                  left: scRect.left,
+                  top: scRect.top + Math.max(0, Math.round(((scRect.height || estGlyphH) - estGlyphH) / 2)),
+                  height: Math.min(estGlyphH, scRect.height || estGlyphH),
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // 编辑器刚聚焦但选区尚未建立或空内容时，优先对齐内部首行块/占位节点，否则回退编辑器真实内边距
+      const firstLine = ed.querySelector?.('[data-block="true"], [data-offset-key], p, br');
+      if (firstLine && typeof firstLine.getBoundingClientRect === 'function') {
+        const flRect = firstLine.getBoundingClientRect();
+        if (flRect && flRect.height > 0 && (flRect.left > 0 || flRect.top > 0)) {
+          const h = Math.max(16, Math.min(estGlyphH, flRect.height));
+          return checkScrollBounds({
+            collapsed: true,
+            left: flRect.left,
+            top: flRect.top + Math.max(0, Math.round((flRect.height - h) / 2)),
+            height: h,
+          });
+        }
+      }
+
+      return checkScrollBounds({
+        collapsed: true,
+        left: edRect.left + padL,
+        top: edRect.top + estEmptyTopOffset,
+        height: estGlyphH,
+      });
     }
 
     function sync(isTyping = false) {
@@ -2520,7 +2604,15 @@ void main() {
     }
 
     function queue(isTyping = false) {
-      if (isDestroyed() || !isEnabled()) return;
+      if (isDestroyed()) return;
+      if (!isEnabled()) {
+        if (rafId && typeof cancelAnimationFrame === 'function') {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+        hideCaret();
+        return;
+      }
       if (rafId && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(rafId);
       if (typeof requestAnimationFrame === 'function') {
         rafId = requestAnimationFrame(() => {
@@ -2532,34 +2624,45 @@ void main() {
 
     const onInput = () => queue(true);
     const onNav = () => queue(false);
+    const onBlur = () => hideCaret();
 
     function bind() {
       const d = docOf();
+      const w = winOf();
       if (!d || bound) return;
       bound = true;
       d.addEventListener('input', onInput, true);
+      d.addEventListener('compositionend', onInput, true);
       d.addEventListener('keyup', onNav, true);
       d.addEventListener('mouseup', onNav, true);
       d.addEventListener('focusin', onNav, true);
       d.addEventListener('focusout', onNav, true);
       d.addEventListener('selectionchange', onNav, true);
       d.addEventListener('scroll', onNav, true);
+      w?.addEventListener?.('resize', onNav, { passive: true });
+      w?.addEventListener?.('focus', onNav, { passive: true });
+      w?.addEventListener?.('blur', onBlur);
     }
 
     function teardown() {
       const d = docOf();
+      const w = winOf();
       if (rafId && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(rafId);
       rafId = 0;
       clearTimeout(typingTimer);
       typingTimer = 0;
       if (d && bound) {
         d.removeEventListener('input', onInput, true);
+        d.removeEventListener('compositionend', onInput, true);
         d.removeEventListener('keyup', onNav, true);
         d.removeEventListener('mouseup', onNav, true);
         d.removeEventListener('focusin', onNav, true);
         d.removeEventListener('focusout', onNav, true);
         d.removeEventListener('selectionchange', onNav, true);
         d.removeEventListener('scroll', onNav, true);
+        w?.removeEventListener?.('resize', onNav);
+        w?.removeEventListener?.('focus', onNav);
+        w?.removeEventListener?.('blur', onBlur);
         bound = false;
       }
       hideCaret();
@@ -2677,7 +2780,10 @@ void main() {
 
     const onPtrMove = (ev) => rimCanvas.onPointerMove(ev);
     const onPtrLeave = () => rimCanvas.onPointerLeave();
-    const onLayoutShift = () => rimCanvas.onLayoutShift();
+    const onLayoutShift = () => {
+      rimCanvas.onLayoutShift();
+      smoothCaret.queue(false);
+    };
     const onWinBlur = () => {
       setAttrIfChanged(d?.documentElement, 'data-ag-cs-win-blur', '1');
       rimCanvas.onPointerLeave();
@@ -2708,7 +2814,8 @@ void main() {
     function syncConfig(nextCfg) {
       if (destroyed) return;
       try {
-        applyConfigAttributes(nextCfg || readConfig());
+        const resolved = nextCfg?.config || nextCfg?.detail?.config || nextCfg || readConfig();
+        applyConfigAttributes(resolved);
         rimCanvas.invalidateMetrics();
         convAura.refreshTheme();
         smoothCaret.queue(false);
@@ -2734,6 +2841,7 @@ void main() {
         if (destroyed) return;
         rimCanvas.invalidateMetrics();
         convAura.refreshTheme();
+        smoothCaret.queue(false);
       });
       attrObs.observe(d.documentElement, {
         attributes: true,
@@ -2743,6 +2851,7 @@ void main() {
           'data-prism-motion',
           'data-prism-ambient',
           'data-prism-corners',
+          'data-prism-smooth-caret',
           'data-ag-cs-theme',
           'data-ag-cs-palette',
           'data-ag-cs-accent',
@@ -2775,6 +2884,7 @@ void main() {
         // 阶段切换（如新建对话发送后 hero -> settling -> active）零延迟清掉旧位置棱镜边，避免半空卡住残影
         if (hasPhaseTransition) {
           rimCanvas.clearImmediate();
+          smoothCaret.queue(false);
         } else {
           rimCanvas.onLayoutShift();
         }

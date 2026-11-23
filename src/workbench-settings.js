@@ -38,7 +38,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this, function (G) {
   'use strict';
 
-  const VERSION = '1.0.7-beta.1-dsh.5';
+  const VERSION = '1.0.7-beta.1-dsh.6';
   const SETTINGS_SCHEMA_REVISION = '1.0.7';
   const MIN_CODE_FOLD_LINES = 48;
   const SONAR_DURATION_MS = 720;
